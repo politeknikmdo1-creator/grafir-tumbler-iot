@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaEye,
   FaEyeSlash,
@@ -9,6 +10,8 @@ import {
 import elektro from "../assets/elektro.png";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,16 +34,19 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("https://grafir-tumbler-backend-production.up.railway.app/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      });
+      const res = await fetch(
+        "https://grafir-tumbler-backend-production.up.railway.app/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            password,
+          }),
+        }
+      );
 
       const data = await res.json();
 
@@ -48,7 +54,7 @@ export default function Login() {
         showToast("Login berhasil", "success");
 
         setTimeout(() => {
-          window.location.href = "/dashboard";
+          navigate("/dashboard");
         }, 1500);
       } else {
         showToast("Username atau Password Salah", "error");
@@ -62,19 +68,21 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-600 p-8">
 
-      {/* ================= TOAST ================= */}
+      {/* Toast */}
 
       <div
-        className={`fixed top-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ${showToastState
+        className={`fixed top-8 left-1/2 -translate-x-1/2 z-50 transition-all duration-500 ${
+          showToastState
             ? "opacity-100 translate-y-0"
             : "opacity-0 -translate-y-10 pointer-events-none"
-          }`}
+        }`}
       >
         <div
-          className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl text-white ${toastType === "success"
+          className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-xl text-white ${
+            toastType === "success"
               ? "bg-green-500"
               : "bg-red-500"
-            }`}
+          }`}
         >
           <div className="text-2xl">
             {toastType === "success" ? (
@@ -88,29 +96,25 @@ export default function Login() {
         </div>
       </div>
 
-      {/* ================= CARD ================= */}
+      {/* Card */}
 
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
 
-        {/* ================= LEFT ================= */}
+        {/* Left */}
 
         <div className="bg-white flex items-center justify-center p-10">
-
           <img
             src={elektro}
             alt="Elektro"
             className="w-full max-w-xl object-contain"
           />
-
         </div>
 
-        {/* ================= RIGHT ================= */}
+        {/* Right */}
 
         <div className="flex items-center justify-center p-12">
 
           <div className="w-full max-w-md">
-
-            {/* ===== Judul ===== */}
 
             <div className="text-center mb-10">
 
