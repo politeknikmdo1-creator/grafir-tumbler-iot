@@ -31,7 +31,7 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8000/login", {
+      const res = await fetch("https://grafir-tumbler-backend-production.up.railway.app/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
