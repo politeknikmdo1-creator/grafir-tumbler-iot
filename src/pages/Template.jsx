@@ -1018,63 +1018,64 @@ export default function Template() {
       <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
         {/*
           ====== TOOLBAR ======
-          Selalu VERTIKAL baik di desktop maupun di HP (flex-col permanen,
-          tidak berubah jadi flex-row di breakpoint manapun). Lebar panel
-          dibuat proporsional (max-w-xs) supaya di layar desktop tidak
-          melebar aneh, dan tiap kontrol diberi label kecil biar rapi.
+          Desktop (breakpoint sm ke atas): HORIZONTAL, satu baris memanjang
+          seperti tampilan awal (flex-row + wrap).
+          Mobile (di bawah sm): kontrol dikelompokkan rapi secara vertikal
+          (bukan sekadar numpuk) supaya tidak terlihat kaku/berantakan.
         */}
-        <div className="w-full max-w-xs bg-white px-4 py-4 rounded-2xl shadow-md flex flex-col gap-3 mb-6 sticky top-2 lg:top-4 z-10">
+        <div className="w-full sm:max-w-3xl bg-white px-4 sm:px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-3 mb-6 sticky top-2 lg:top-4 z-10">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 mb-1">
+            <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
               Text
             </label>
             <input
               value={customText}
               onChange={handleTextChange}
               placeholder="Masukkan Text"
-              className="border px-3 py-2 rounded-xl w-full outline-none focus:ring-2 focus:ring-blue-400"
+              className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
             />
           </div>
 
-          <div className="flex gap-3">
-            <div className="w-20 flex-shrink-0">
-              <label className="block text-xs font-semibold text-gray-500 mb-1">
+          <div className="flex gap-3 sm:contents">
+            <div className="w-20 flex-shrink-0 sm:w-20">
+              <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
                 Ukuran
               </label>
               <input
                 type="number"
                 value={fontSize}
                 onChange={handleFontSizeChange}
-                className="border px-3 py-2 w-full rounded-xl outline-none"
+                className="border px-3 py-2 w-full sm:w-20 rounded-xl outline-none"
               />
             </div>
 
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-gray-500 mb-1">
+            <div className="flex-1 sm:flex-initial sm:flex sm:items-center sm:gap-2">
+              <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
                 Rotasi
               </label>
+              <span className="hidden sm:inline text-sm">Rotasi</span>
               <input
                 type="range"
                 min="-180"
                 max="180"
                 value={rotation}
                 onChange={handleRotationChange}
-                className="w-full"
+                className="w-full sm:w-auto"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t sm:contents sm:border-0 sm:pt-0">
             <button
               onClick={handleUngroup}
-              className="mt-2 bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+              className="mt-2 sm:mt-0 bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
             >
               Ungroup
             </button>
 
             <button
               onClick={handleDuplicateObject}
-              className="mt-2 bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+              className="mt-2 sm:mt-0 bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
             >
               Copy
             </button>
@@ -1096,7 +1097,7 @@ export default function Template() {
 
           <button
             onClick={handleSelesai}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
+            className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
           >
             ✓ Selesai & Kirim
           </button>
