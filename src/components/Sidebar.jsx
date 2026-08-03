@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MdDashboard } from "react-icons/md";
 import { FaFileAlt } from "react-icons/fa";
@@ -7,6 +8,21 @@ import tumblerIcon from "../assets/tumbler.png";
 // supaya hanya ADA SATU sumber kontrol (tombol hamburger di Topbar).
 export default function Sidebar({ isOpen = true, onClose = () => {} }) {
   const location = useLocation();
+
+  // ===== FIX: cegah sidebar "tampil dulu" di HP saat pindah halaman =====
+  // Kalau parent (App.jsx) menginisialisasi isOpen = true tanpa cek lebar
+  // layar, maka di HP sidebar + overlay gelap akan sempat menutupi halaman
+  // sebelum konten (misalnya dashboard) terlihat. Di sini, begitu komponen
+  // pertama kali mount, kalau layar masih ukuran HP (< 768px) dan isOpen
+  // masih true, langsung tutup lewat onClose() supaya halaman yang bersih
+  // yang tampil dulu, dan sidebar baru muncul kalau hamburger ditekan.
+  useEffect(() => {
+    if (window.innerWidth < 768 && isOpen) {
+      onClose();
+    }
+    // sengaja hanya jalan sekali saat mount, bukan setiap isOpen berubah
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // otomatis tutup sidebar tiap pindah halaman (khusus HP)
   const handleLinkClick = () => {
