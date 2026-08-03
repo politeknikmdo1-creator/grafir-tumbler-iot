@@ -1018,13 +1018,15 @@ export default function Template() {
       <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
         {/*
           ====== TOOLBAR ======
-          Desktop (breakpoint sm ke atas): HORIZONTAL, satu baris memanjang
-          seperti tampilan awal (flex-row + wrap).
+          Desktop (breakpoint sm ke atas): HORIZONTAL dalam SATU BARIS saja
+          (flex-nowrap, tidak dibatasi max-width supaya tidak pecah ke baris
+          kedua). Kalau layar sempit, baris ini scroll ke samping (overflow-x-auto)
+          daripada wrap ke bawah.
           Mobile (di bawah sm): kontrol dikelompokkan rapi secara vertikal
           (bukan sekadar numpuk) supaya tidak terlihat kaku/berantakan.
         */}
-        <div className="w-full sm:max-w-3xl bg-white px-4 sm:px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-3 mb-6 sticky top-2 lg:top-4 z-10">
-          <div>
+        <div className="w-full sm:w-fit bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-nowrap items-stretch sm:items-center gap-3 mb-6 sticky top-2 lg:top-4 z-10 sm:overflow-x-auto max-w-full">
+          <div className="sm:flex-shrink-0">
             <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
               Text
             </label>
@@ -1049,11 +1051,11 @@ export default function Template() {
               />
             </div>
 
-            <div className="flex-1 sm:flex-initial sm:flex sm:items-center sm:gap-2">
+            <div className="flex-1 sm:flex-initial sm:flex-shrink-0 sm:flex sm:items-center sm:gap-2">
               <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
                 Rotasi
               </label>
-              <span className="hidden sm:inline text-sm">Rotasi</span>
+              <span className="hidden sm:inline text-sm whitespace-nowrap">Rotasi</span>
               <input
                 type="range"
                 min="-180"
@@ -1068,28 +1070,28 @@ export default function Template() {
           <div className="grid grid-cols-2 gap-2 pt-2 border-t sm:contents sm:border-0 sm:pt-0">
             <button
               onClick={handleUngroup}
-              className="mt-2 sm:mt-0 bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+              className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
             >
               Ungroup
             </button>
 
             <button
               onClick={handleDuplicateObject}
-              className="mt-2 sm:mt-0 bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+              className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
             >
               Copy
             </button>
 
             <button
               onClick={handleHapusObject}
-              className="bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
+              className="sm:flex-shrink-0 sm:whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
             >
               Hapus Dipilih
             </button>
 
             <button
               onClick={handleHapusCanvas}
-              className="bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
+              className="sm:flex-shrink-0 sm:whitespace-nowrap bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
             >
               Hapus Text & Logo
             </button>
@@ -1097,7 +1099,7 @@ export default function Template() {
 
           <button
             onClick={handleSelesai}
-            className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
+            className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
           >
             ✓ Selesai & Kirim
           </button>
