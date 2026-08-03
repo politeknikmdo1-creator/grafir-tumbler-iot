@@ -17,8 +17,11 @@ export default function Topbar({ setShowSidebar, showSidebar }) {
   };
 
   return (
-    <div className="w-full bg-white shadow px-6 py-4 flex justify-between items-center">
-      
+    // FIX: sticky top-0 + z-index eksplisit, supaya Topbar dijamin
+    // menempel di atas area scroll-nya sendiri dan tidak ikut "berkedip"
+    // saat browser HP menyembunyikan/menampilkan address bar ketika scroll.
+    <div className="sticky top-0 z-30 flex-shrink-0 w-full bg-white shadow px-6 py-4 flex justify-between items-center">
+
       {/* Kiri */}
       <div className="flex items-center gap-4">
         <FaBars

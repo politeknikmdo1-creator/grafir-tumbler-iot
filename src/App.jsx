@@ -20,7 +20,7 @@ function DashboardLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex h-dvh bg-gray-100 overflow-hidden">
       {/* Sidebar — satu-satunya kontrol buka/tutup ada di Topbar */}
       <Sidebar
         isOpen={showSidebar}
@@ -28,7 +28,7 @@ function DashboardLayout() {
       />
 
       {/* Content */}
-      <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col h-dvh min-w-0 overflow-hidden">
         <Topbar
           showSidebar={showSidebar}
           setShowSidebar={setShowSidebar}

@@ -47,7 +47,7 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
       {/* ===== SIDEBAR ===== */}
       <div
         className={`
-          w-64 h-screen bg-gradient-to-b from-blue-700 via-blue-600 to-indigo-700 text-white
+          w-64 h-dvh bg-gradient-to-b from-blue-700 via-blue-600 to-indigo-700 text-white
           flex flex-col shadow-2xl flex-shrink-0
           fixed top-0 left-0 z-50
           transition-transform duration-300 ease-in-out
