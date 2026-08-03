@@ -9,7 +9,15 @@ import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 
 function DashboardLayout() {
-  const [showSidebar, setShowSidebar] = useState(true);
+  // ===== FIX: jangan selalu mulai dari true =====
+  // Sebelumnya showSidebar selalu diinisialisasi `true`, jadi di HP
+  // sidebar (+ overlay gelap) selalu tampil dulu sesaat sebelum
+  // otomatis ditutup oleh Sidebar.jsx -> terlihat "muncul lalu hilang".
+  // Sekarang nilai awalnya dicek dari lebar layar: di HP (< 768px)
+  // langsung mulai tertutup, di desktop tetap terbuka seperti biasa.
+  const [showSidebar, setShowSidebar] = useState(
+    () => window.innerWidth >= 768
+  );
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
