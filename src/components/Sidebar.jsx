@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { MdDashboard, MdClose } from "react-icons/md";
+import { MdDashboard } from "react-icons/md";
 import { FaFileAlt } from "react-icons/fa";
 import tumblerIcon from "../assets/tumbler.png";
 
@@ -43,35 +43,24 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
 
         {/* Header */}
         <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                <img
-                  src={tumblerIcon}
-                  alt="tumbler"
-                  className="w-8 h-8 object-contain"
-                />
-              </div>
-
-              <div>
-                <h1 className="text-2xl font-bold whitespace-nowrap">
-                  Tumbler
-                </h1>
-
-                <p className="text-blue-200 text-sm whitespace-nowrap">
-                  Grafir System
-                </p>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+              <img
+                src={tumblerIcon}
+                alt="tumbler"
+                className="w-8 h-8 object-contain"
+              />
             </div>
 
-            {/* Tombol tutup (khusus HP) */}
-            <button
-              onClick={onClose}
-              className="md:hidden w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0"
-              aria-label="Tutup menu"
-            >
-              <MdClose size={20} />
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold whitespace-nowrap">
+                Tumbler
+              </h1>
+
+              <p className="text-blue-200 text-sm whitespace-nowrap">
+                Grafir System
+              </p>
+            </div>
           </div>
 
           <div className="mt-6 border-t border-white/20"></div>
