@@ -1,15 +1,17 @@
-import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MdDashboard, MdMenu, MdClose } from "react-icons/md";
+import { MdDashboard, MdClose } from "react-icons/md";
 import { FaFileAlt } from "react-icons/fa";
 import tumblerIcon from "../assets/tumbler.png";
 
-export default function Sidebar() {
+// isOpen & onClose dikontrol dari App.jsx (state showSidebar),
+// supaya hanya ADA SATU sumber kontrol (tombol hamburger di Topbar).
+export default function Sidebar({ isOpen = true, onClose = () => {} }) {
   const location = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
 
   // otomatis tutup sidebar tiap pindah halaman (khusus HP)
-  const handleLinkClick = () => setIsOpen(false);
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768) onClose();
+  };
 
   const menuItems = [
     { to: "/dashboard", label: "Dashboard", icon: MdDashboard, iconSize: 22 },
@@ -18,21 +20,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* ===== TOMBOL HAMBURGER (khusus HP, muncul di pojok kiri atas) ===== */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`md:hidden fixed top-4 left-4 z-40 w-11 h-11 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg transition-opacity ${
-          isOpen ? "opacity-0 pointer-events-none" : "opacity-100"
-        }`}
-        aria-label="Buka menu"
-      >
-        <MdMenu size={24} />
-      </button>
-
       {/* ===== OVERLAY (khusus HP, saat sidebar terbuka) ===== */}
       {isOpen && (
         <div
-          onClick={() => setIsOpen(false)}
+          onClick={onClose}
           className="md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         />
       )}
@@ -41,11 +32,12 @@ export default function Sidebar() {
       <div
         className={`
           w-64 h-screen bg-gradient-to-b from-blue-700 via-blue-600 to-indigo-700 text-white
-          flex flex-col shadow-2xl
+          flex flex-col shadow-2xl flex-shrink-0
           fixed top-0 left-0 z-50
           transition-transform duration-300 ease-in-out
-          md:translate-x-0 md:static
-          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          md:static md:transition-all
+          ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0
+          ${isOpen ? "md:w-64" : "md:w-0 md:overflow-hidden"}
         `}
       >
 
@@ -62,11 +54,11 @@ export default function Sidebar() {
               </div>
 
               <div>
-                <h1 className="text-2xl font-bold">
+                <h1 className="text-2xl font-bold whitespace-nowrap">
                   Tumbler
                 </h1>
 
-                <p className="text-blue-200 text-sm">
+                <p className="text-blue-200 text-sm whitespace-nowrap">
                   Grafir System
                 </p>
               </div>
@@ -74,7 +66,7 @@ export default function Sidebar() {
 
             {/* Tombol tutup (khusus HP) */}
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={onClose}
               className="md:hidden w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0"
               aria-label="Tutup menu"
             >

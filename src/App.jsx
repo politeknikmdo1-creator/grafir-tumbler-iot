@@ -13,23 +13,20 @@ function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div
-        className={`transition-all duration-300 ${
-          showSidebar ? "w-64" : "w-0"
-        } overflow-hidden`}
-      >
-        <Sidebar />
-      </div>
+      {/* Sidebar — satu-satunya kontrol buka/tutup ada di Topbar */}
+      <Sidebar
+        isOpen={showSidebar}
+        onClose={() => setShowSidebar(false)}
+      />
 
       {/* Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen w-full min-w-0">
         <Topbar
           showSidebar={showSidebar}
           setShowSidebar={setShowSidebar}
         />
 
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-4 md:p-6">
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/template" element={<Template />} />
