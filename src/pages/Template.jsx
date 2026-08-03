@@ -1018,52 +1018,63 @@ export default function Template() {
       <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
         {/*
           ====== TOOLBAR ======
-          Diubah: pada layar mobile (di bawah breakpoint sm) semua kontrol
-          disusun VERTIKAL (flex-col, w-full) supaya tidak berantakan.
-          Mulai breakpoint sm ke atas, kembali ke layout horizontal (flex-row + wrap)
-          seperti sebelumnya.
+          Selalu VERTIKAL baik di desktop maupun di HP (flex-col permanen,
+          tidak berubah jadi flex-row di breakpoint manapun). Lebar panel
+          dibuat proporsional (max-w-xs) supaya di layar desktop tidak
+          melebar aneh, dan tiap kontrol diberi label kecil biar rapi.
         */}
-        <div className="w-full max-w-3xl bg-white px-3 sm:px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 mb-6 sticky top-2 lg:top-4 z-10">
-          <input
-            value={customText}
-            onChange={handleTextChange}
-            placeholder="Masukkan Text"
-            className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
-          />
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="w-full max-w-xs bg-white px-4 py-4 rounded-2xl shadow-md flex flex-col gap-3 mb-6 sticky top-2 lg:top-4 z-10">
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 mb-1">
+              Text
+            </label>
             <input
-              type="number"
-              value={fontSize}
-              onChange={handleFontSizeChange}
-              className="border px-3 py-2 w-20 rounded-xl outline-none"
+              value={customText}
+              onChange={handleTextChange}
+              placeholder="Masukkan Text"
+              className="border px-3 py-2 rounded-xl w-full outline-none focus:ring-2 focus:ring-blue-400"
             />
+          </div>
 
-            <div className="flex items-center gap-2 flex-1 sm:flex-initial">
-              <span className="text-sm whitespace-nowrap">Rotasi</span>
+          <div className="flex gap-3">
+            <div className="w-20 flex-shrink-0">
+              <label className="block text-xs font-semibold text-gray-500 mb-1">
+                Ukuran
+              </label>
+              <input
+                type="number"
+                value={fontSize}
+                onChange={handleFontSizeChange}
+                className="border px-3 py-2 w-full rounded-xl outline-none"
+              />
+            </div>
 
+            <div className="flex-1">
+              <label className="block text-xs font-semibold text-gray-500 mb-1">
+                Rotasi
+              </label>
               <input
                 type="range"
                 min="-180"
                 max="180"
                 value={rotation}
                 onChange={handleRotationChange}
-                className="flex-1 sm:flex-initial"
+                className="w-full"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t">
             <button
               onClick={handleUngroup}
-              className="bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+              className="mt-2 bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
             >
               Ungroup
             </button>
 
             <button
               onClick={handleDuplicateObject}
-              className="bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+              className="mt-2 bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
             >
               Copy
             </button>
@@ -1081,14 +1092,14 @@ export default function Template() {
             >
               Hapus Text & Logo
             </button>
-
-            <button
-              onClick={handleSelesai}
-              className="col-span-2 sm:col-span-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
-            >
-              ✓ Selesai & Kirim
-            </button>
           </div>
+
+          <button
+            onClick={handleSelesai}
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
+          >
+            ✓ Selesai & Kirim
+          </button>
         </div>
 
         {/* overflow-x-auto = jaring pengaman kalau layar lebih sempit dari kartu canvas */}
