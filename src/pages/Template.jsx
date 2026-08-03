@@ -844,9 +844,9 @@ export default function Template() {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col lg:flex-row lg:h-full">
       {/* ===================== SIDEBAR KIRI ===================== */}
-      <div className="w-80 m-4 bg-white rounded-2xl shadow-md p-4 flex flex-col h-[calc(100vh-2rem)]">
+      <div className="w-full lg:w-80 m-2 sm:m-4 bg-white rounded-2xl shadow-md p-4 flex flex-col h-auto lg:h-[calc(100vh-2rem)]">
 
         {/* ===== Bagian ini TIDAK ikut scroll (statis) ===== */}
         <div className="flex-shrink-0">
@@ -856,7 +856,7 @@ export default function Template() {
 
           <label className="flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-xl cursor-pointer hover:from-indigo-600 hover:to-blue-700 transition transform hover:scale-105 shadow-md mb-4 active:scale-95">
             <svg
-              className="w-5 h-5 mr-2"
+              className="w-5 h-5 mr-2 flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -868,7 +868,7 @@ export default function Template() {
                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
               />
             </svg>
-            <span>Upload Logo / Gambar</span>
+            <span className="text-sm sm:text-base">Upload Logo / Gambar</span>
             <input
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
@@ -912,7 +912,7 @@ export default function Template() {
               WordArt Suggestions
             </h3>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
               <button
                 onClick={addWordArtPoliteknik}
                 className="border rounded-xl h-20 text-xs hover:bg-blue-50"
@@ -953,7 +953,7 @@ export default function Template() {
 
               <button
                 onClick={addWordArtPromo20}
-                className="border rounded-xl h-20 text-sm hover:bg-blue-50 col-span-2"
+                className="border rounded-xl h-20 text-sm hover:bg-blue-50 col-span-2 sm:col-span-3 lg:col-span-2"
               >
                 GET UP TO <b className="text-xl">20% OFF</b>
                 <br />
@@ -971,8 +971,8 @@ export default function Template() {
         </div>
 
         {/* ===== Bagian ini YANG SCROLL (list template) ===== */}
-        <div className="flex-1 overflow-y-auto pr-1 -mr-1">
-          <div className="grid grid-cols-2 gap-3 pb-2">
+        <div className="lg:flex-1 lg:overflow-y-auto pr-1 -mr-1">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3 pb-2">
             {templates.map((t) => (
               <div
                 key={t.id}
@@ -1006,7 +1006,7 @@ export default function Template() {
             ))}
 
             {templates.length === 0 && (
-              <p className="col-span-2 text-center text-gray-400 text-sm py-6">
+              <p className="col-span-2 sm:col-span-3 lg:col-span-2 text-center text-gray-400 text-sm py-6">
                 Belum ada template tersimpan.
               </p>
             )}
@@ -1015,13 +1015,13 @@ export default function Template() {
       </div>
 
       {/* ===================== AREA CANVAS ===================== */}
-      <div className="flex-1 flex flex-col items-center pt-6">
-        <div className="bg-white px-4 py-3 rounded-2xl shadow-md flex flex-wrap items-center gap-3 mb-6 sticky top-4 z-10">
+      <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
+        <div className="w-full max-w-3xl bg-white px-3 sm:px-4 py-3 rounded-2xl shadow-md flex flex-wrap items-center gap-2 sm:gap-3 mb-6 sticky top-2 lg:top-4 z-10">
           <input
             value={customText}
             onChange={handleTextChange}
             placeholder="Masukkan Text"
-            className="border px-3 py-2 rounded-xl w-56 outline-none focus:ring-2 focus:ring-blue-400"
+            className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
           />
 
           <input
@@ -1045,58 +1045,61 @@ export default function Template() {
 
           <button
             onClick={handleUngroup}
-            className="bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200"
+            className="bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
           >
             Ungroup
           </button>
 
           <button
             onClick={handleDuplicateObject}
-            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200"
+            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
           >
             Copy
           </button>
 
           <button
             onClick={handleHapusObject}
-            className="bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200"
+            className="bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
           >
             Hapus Dipilih
           </button>
 
           <button
             onClick={handleSelesai}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md"
+            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
           >
             ✓ Selesai & Kirim
           </button>
 
           <button
             onClick={handleHapusCanvas}
-            className="bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200"
+            className="bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
           >
             Hapus Text & Logo
           </button>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow w-[350px] h-[550px] relative flex items-center justify-center">
-          <img
-            src={tumblerImg}
-            className="absolute h-[480px] pointer-events-none"
-          />
-
-          <div className="absolute w-[150px] h-[320px] flex items-center justify-center">
-            <div className="absolute w-[110px] h-[340px] flex items-center justify-center pointer-events-none">
-              <div className="absolute w-[90px] h-[330px] border-2 border-dashed border-green-400 rounded-md translate-y-[25px]"></div>
-              <div className="absolute w-[75px] h-[300px] border border-green-600 rounded-md translate-y-[25px]"></div>
-            </div>
-
-            <canvas
-              ref={canvasRef}
-              className="absolute z-10"
-              width="150"
-              height="320"
+        {/* overflow-x-auto = jaring pengaman kalau layar lebih sempit dari kartu canvas */}
+        <div className="w-full overflow-x-auto flex justify-center">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center justify-center flex-shrink-0">
+            <img
+              src={tumblerImg}
+              className="absolute h-[430px] sm:h-[480px] pointer-events-none"
             />
+
+            <div className="absolute w-[150px] h-[320px] flex items-center justify-center">
+              <div className="absolute w-[110px] h-[340px] flex items-center justify-center pointer-events-none">
+                <div className="absolute w-[90px] h-[330px] border-2 border-dashed border-green-400 rounded-md translate-y-[25px]"></div>
+                <div className="absolute w-[75px] h-[300px] border border-green-600 rounded-md translate-y-[25px]"></div>
+              </div>
+
+              <canvas
+                ref={canvasRef}
+                className="absolute z-10"
+                width="150"
+                height="320"
+              />
+            </div>
           </div>
         </div>
       </div>
