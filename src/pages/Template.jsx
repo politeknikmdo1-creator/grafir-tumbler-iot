@@ -1017,114 +1017,124 @@ export default function Template() {
       {/* ===================== AREA CANVAS ===================== */}
       <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
         {/*
-          ====== TOOLBAR ======
-          Desktop (breakpoint sm ke atas): HORIZONTAL dalam SATU BARIS saja
-          (flex-nowrap, tidak dibatasi max-width supaya tidak pecah ke baris
-          kedua). Kalau layar sempit, baris ini scroll ke samping (overflow-x-auto)
-          daripada wrap ke bawah.
-          Mobile (di bawah sm): kontrol dikelompokkan rapi secara vertikal
-          (bukan sekadar numpuk) supaya tidak terlihat kaku/berantakan.
+          ====== GRUP STICKY: TOOLBAR + KANVAS TUMBLER ======
+          Toolbar dan kartu tumbler dibungkus jadi SATU grup sticky, supaya
+          saat halaman di-scroll (terutama di HP), tumbler ikut "menempel"
+          bersama toolbar dan tidak lagi ikut ter-scroll naik/hilang dari
+          layar. Sebelumnya hanya toolbar yang sticky, sehingga tumbler
+          terlihat "bergerak sendiri" saat scroll.
         */}
-        <div className="w-full sm:w-fit bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-nowrap items-stretch sm:items-center gap-3 mb-6 sticky top-2 lg:top-4 z-10 sm:overflow-x-auto max-w-full">
-          <div className="sm:flex-shrink-0">
-            <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
-              Text
-            </label>
-            <input
-              value={customText}
-              onChange={handleTextChange}
-              placeholder="Masukkan Text"
-              className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-
-          <div className="flex gap-3 sm:contents">
-            <div className="w-20 flex-shrink-0 sm:w-20">
+        <div className="w-full flex flex-col items-center gap-4 sticky top-2 lg:top-4 z-10">
+          {/*
+            ====== TOOLBAR ======
+            Desktop (breakpoint sm ke atas): HORIZONTAL dalam SATU BARIS saja
+            (flex-nowrap, tidak dibatasi max-width supaya tidak pecah ke baris
+            kedua). Kalau layar sempit, baris ini scroll ke samping (overflow-x-auto)
+            daripada wrap ke bawah.
+            Mobile (di bawah sm): kontrol dikelompokkan rapi secara vertikal
+            (bukan sekadar numpuk) supaya tidak terlihat kaku/berantakan.
+          */}
+          <div className="w-full sm:w-fit bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-nowrap items-stretch sm:items-center gap-3 sm:overflow-x-auto max-w-full">
+            <div className="sm:flex-shrink-0">
               <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
-                Ukuran
+                Text
               </label>
               <input
-                type="number"
-                value={fontSize}
-                onChange={handleFontSizeChange}
-                className="border px-3 py-2 w-full sm:w-20 rounded-xl outline-none"
+                value={customText}
+                onChange={handleTextChange}
+                placeholder="Masukkan Text"
+                className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
-            <div className="flex-1 sm:flex-initial sm:flex-shrink-0 sm:flex sm:items-center sm:gap-2">
-              <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
-                Rotasi
-              </label>
-              <span className="hidden sm:inline text-sm whitespace-nowrap">Rotasi</span>
-              <input
-                type="range"
-                min="-180"
-                max="180"
-                value={rotation}
-                onChange={handleRotationChange}
-                className="w-full sm:w-auto"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t sm:contents sm:border-0 sm:pt-0">
-            <button
-              onClick={handleUngroup}
-              className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
-            >
-              Ungroup
-            </button>
-
-            <button
-              onClick={handleDuplicateObject}
-              className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
-            >
-              Copy
-            </button>
-
-            <button
-              onClick={handleHapusObject}
-              className="sm:flex-shrink-0 sm:whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
-            >
-              Hapus Dipilih
-            </button>
-
-            <button
-              onClick={handleHapusCanvas}
-              className="sm:flex-shrink-0 sm:whitespace-nowrap bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
-            >
-              Hapus Text & Logo
-            </button>
-          </div>
-
-          <button
-            onClick={handleSelesai}
-            className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
-          >
-            ✓ Selesai & Kirim
-          </button>
-        </div>
-
-        {/* overflow-x-auto = jaring pengaman kalau layar lebih sempit dari kartu canvas */}
-        <div className="w-full overflow-x-auto flex justify-center">
-          <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center justify-center flex-shrink-0">
-            <img
-              src={tumblerImg}
-              className="absolute h-[430px] sm:h-[480px] pointer-events-none"
-            />
-
-            <div className="absolute w-[150px] h-[320px] flex items-center justify-center">
-              <div className="absolute w-[110px] h-[340px] flex items-center justify-center pointer-events-none">
-                <div className="absolute w-[90px] h-[330px] border-2 border-dashed border-green-400 rounded-md translate-y-[25px]"></div>
-                <div className="absolute w-[75px] h-[300px] border border-green-600 rounded-md translate-y-[25px]"></div>
+            <div className="flex gap-3 sm:contents">
+              <div className="w-20 flex-shrink-0 sm:w-20">
+                <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
+                  Ukuran
+                </label>
+                <input
+                  type="number"
+                  value={fontSize}
+                  onChange={handleFontSizeChange}
+                  className="border px-3 py-2 w-full sm:w-20 rounded-xl outline-none"
+                />
               </div>
 
-              <canvas
-                ref={canvasRef}
-                className="absolute z-10"
-                width="150"
-                height="320"
+              <div className="flex-1 sm:flex-initial sm:flex-shrink-0 sm:flex sm:items-center sm:gap-2">
+                <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
+                  Rotasi
+                </label>
+                <span className="hidden sm:inline text-sm whitespace-nowrap">Rotasi</span>
+                <input
+                  type="range"
+                  min="-180"
+                  max="180"
+                  value={rotation}
+                  onChange={handleRotationChange}
+                  className="w-full sm:w-auto"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t sm:contents sm:border-0 sm:pt-0">
+              <button
+                onClick={handleUngroup}
+                className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+              >
+                Ungroup
+              </button>
+
+              <button
+                onClick={handleDuplicateObject}
+                className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+              >
+                Copy
+              </button>
+
+              <button
+                onClick={handleHapusObject}
+                className="sm:flex-shrink-0 sm:whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
+              >
+                Hapus Dipilih
+              </button>
+
+              <button
+                onClick={handleHapusCanvas}
+                className="sm:flex-shrink-0 sm:whitespace-nowrap bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
+              >
+                Hapus Text & Logo
+              </button>
+            </div>
+
+            <button
+              onClick={handleSelesai}
+              className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
+            >
+              ✓ Selesai & Kirim
+            </button>
+          </div>
+
+          {/* overflow-x-auto = jaring pengaman kalau layar lebih sempit dari kartu canvas */}
+          <div className="w-full overflow-x-auto flex justify-center">
+            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center justify-center flex-shrink-0">
+              <img
+                src={tumblerImg}
+                className="absolute h-[430px] sm:h-[480px] pointer-events-none"
               />
+
+              <div className="absolute w-[150px] h-[320px] flex items-center justify-center">
+                <div className="absolute w-[110px] h-[340px] flex items-center justify-center pointer-events-none">
+                  <div className="absolute w-[90px] h-[330px] border-2 border-dashed border-green-400 rounded-md translate-y-[25px]"></div>
+                  <div className="absolute w-[75px] h-[300px] border border-green-600 rounded-md translate-y-[25px]"></div>
+                </div>
+
+                <canvas
+                  ref={canvasRef}
+                  className="absolute z-10"
+                  width="150"
+                  height="320"
+                />
+              </div>
             </div>
           </div>
         </div>
