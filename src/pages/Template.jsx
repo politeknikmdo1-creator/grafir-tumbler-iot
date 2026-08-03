@@ -1016,7 +1016,14 @@ export default function Template() {
 
       {/* ===================== AREA CANVAS ===================== */}
       <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
-        <div className="w-full max-w-3xl bg-white px-3 sm:px-4 py-3 rounded-2xl shadow-md flex flex-wrap items-center gap-2 sm:gap-3 mb-6 sticky top-2 lg:top-4 z-10">
+        {/*
+          ====== TOOLBAR ======
+          Diubah: pada layar mobile (di bawah breakpoint sm) semua kontrol
+          disusun VERTIKAL (flex-col, w-full) supaya tidak berantakan.
+          Mulai breakpoint sm ke atas, kembali ke layout horizontal (flex-row + wrap)
+          seperti sebelumnya.
+        */}
+        <div className="w-full max-w-3xl bg-white px-3 sm:px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2 sm:gap-3 mb-6 sticky top-2 lg:top-4 z-10">
           <input
             value={customText}
             onChange={handleTextChange}
@@ -1024,59 +1031,64 @@ export default function Template() {
             className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
           />
 
-          <input
-            type="number"
-            value={fontSize}
-            onChange={handleFontSizeChange}
-            className="border px-3 py-2 w-20 rounded-xl outline-none"
-          />
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm">Rotasi</span>
-
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <input
-              type="range"
-              min="-180"
-              max="180"
-              value={rotation}
-              onChange={handleRotationChange}
+              type="number"
+              value={fontSize}
+              onChange={handleFontSizeChange}
+              className="border px-3 py-2 w-20 rounded-xl outline-none"
             />
+
+            <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+              <span className="text-sm whitespace-nowrap">Rotasi</span>
+
+              <input
+                type="range"
+                min="-180"
+                max="180"
+                value={rotation}
+                onChange={handleRotationChange}
+                className="flex-1 sm:flex-initial"
+              />
+            </div>
           </div>
 
-          <button
-            onClick={handleUngroup}
-            className="bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
-          >
-            Ungroup
-          </button>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleUngroup}
+              className="bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+            >
+              Ungroup
+            </button>
 
-          <button
-            onClick={handleDuplicateObject}
-            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
-          >
-            Copy
-          </button>
+            <button
+              onClick={handleDuplicateObject}
+              className="bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+            >
+              Copy
+            </button>
 
-          <button
-            onClick={handleHapusObject}
-            className="bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
-          >
-            Hapus Dipilih
-          </button>
+            <button
+              onClick={handleHapusObject}
+              className="bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
+            >
+              Hapus Dipilih
+            </button>
 
-          <button
-            onClick={handleSelesai}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
-          >
-            ✓ Selesai & Kirim
-          </button>
+            <button
+              onClick={handleHapusCanvas}
+              className="bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
+            >
+              Hapus Text & Logo
+            </button>
 
-          <button
-            onClick={handleHapusCanvas}
-            className="bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
-          >
-            Hapus Text & Logo
-          </button>
+            <button
+              onClick={handleSelesai}
+              className="col-span-2 sm:col-span-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
+            >
+              ✓ Selesai & Kirim
+            </button>
+          </div>
         </div>
 
         {/* overflow-x-auto = jaring pengaman kalau layar lebih sempit dari kartu canvas */}
