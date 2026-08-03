@@ -846,7 +846,7 @@ export default function Template() {
   return (
     <div className="flex flex-col lg:flex-row lg:h-full">
       {/* ===================== SIDEBAR KIRI ===================== */}
-      <div className="w-full lg:w-80 m-2 sm:m-4 bg-white rounded-2xl shadow-md p-4 flex flex-col h-auto lg:h-[calc(100vh-2rem)]">
+      <div className="w-full lg:w-80 m-2 sm:m-4 bg-white rounded-2xl shadow-md p-4 flex flex-col h-auto lg:h-full">
 
         {/* ===== Bagian ini TIDAK ikut scroll (statis) ===== */}
         <div className="flex-shrink-0">
