@@ -257,32 +257,58 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  /* ================= AKSI PER ITEM (dipakai di tabel & card) ================= */
+  const ActionButtons = ({ item }) => (
+    <div className="flex flex-wrap justify-start sm:justify-center gap-2">
+      <button
+        onClick={() => handleDownloadPNG(item)}
+        className="flex-1 sm:flex-none min-w-[70px] px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition"
+      >
+        PNG
+      </button>
+
+      <button
+        onClick={() => handleDownloadJSON(item)}
+        className="flex-1 sm:flex-none min-w-[70px] px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium transition"
+      >
+        JSON
+      </button>
+
+      <button
+        onClick={() => handleDelete(item.id)}
+        className="flex-1 sm:flex-none min-w-[70px] px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs sm:text-sm font-medium transition"
+      >
+        Hapus
+      </button>
+    </div>
+  );
+
   return (
-    <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
       <div className="h-2 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500"></div>
 
-      <div className="p-8">
-        <h2 className="text-2xl font-bold text-slate-800 mb-8">
+      <div className="p-4 sm:p-6 md:p-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-800 mb-6 md:mb-8">
           Status Mesin
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
 
           {/* KONTROL MESIN */}
-          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300">
 
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-slate-500 font-medium">
+              <h3 className="text-slate-500 font-medium text-sm sm:text-base">
                 Kontrol Mesin
               </h3>
 
-              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center">
 
               </div>
             </div>
 
             <h1
-              className={`text-4xl font-bold ${status.kontrol_mesin === "on"
+              className={`text-3xl sm:text-4xl font-bold ${status.kontrol_mesin === "on"
                 ? "text-green-500"
                 : "text-red-500"
                 }`}
@@ -294,41 +320,41 @@ export default function Dashboard() {
 
               <button
                 onClick={() => handlePower("on")}
-                className="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold shadow-lg"
+                className="flex-1 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold shadow-lg text-sm sm:text-base"
               >
                 ON
               </button>
 
               <button
                 onClick={() => handlePower("off")}
-                className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold shadow-lg"
+                className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold shadow-lg text-sm sm:text-base"
               >
                 OFF
               </button>
 
             </div>
 
-            <p className="text-sm text-slate-500 mt-5">
+            <p className="text-xs sm:text-sm text-slate-500 mt-5">
               Relay control mesin grafir.
             </p>
 
           </div>
 
           {/* POWER ASLI */}
-          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300">
 
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-slate-500 font-medium">
+              <h3 className="text-slate-500 font-medium text-sm sm:text-base">
                 Power Mesin Asli
               </h3>
 
-              <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center">
 
               </div>
             </div>
 
             <h1
-              className={`text-4xl font-bold ${status.power === "on"
+              className={`text-3xl sm:text-4xl font-bold ${status.power === "on"
                 ? "text-green-500"
                 : "text-red-500"
                 }`}
@@ -336,27 +362,27 @@ export default function Dashboard() {
               {status.power === "on" ? "ON" : "OFF"}
             </h1>
 
-            <p className="mt-5 text-sm text-slate-500">
+            <p className="mt-5 text-xs sm:text-sm text-slate-500">
               Monitoring arus dari sensor ACS712.
             </p>
 
           </div>
 
           {/* STATUS PROSES */}
-          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300">
+          <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300 sm:col-span-2 lg:col-span-1">
 
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-slate-500 font-medium">
+              <h3 className="text-slate-500 font-medium text-sm sm:text-base">
                 Status Produksi
               </h3>
 
-              <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
 
               </div>
             </div>
 
             <h1
-              className={`text-4xl font-bold ${status.status === "running"
+              className={`text-3xl sm:text-4xl font-bold ${status.status === "running"
                 ? "text-blue-600"
                 : "text-slate-500"
                 }`}
@@ -366,7 +392,7 @@ export default function Dashboard() {
                 : "IDLE"}
             </h1>
 
-            <p className="mt-5 text-sm text-slate-500">
+            <p className="mt-5 text-xs sm:text-sm text-slate-500">
               RUNNING saat mesin benar-benar bekerja.
             </p>
 
@@ -375,16 +401,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
 
         <div className="h-2 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500"></div>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
 
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
 
             <div>
-              <h2 className="text-2xl font-bold text-slate-800">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
                 Antrian Produksi
               </h2>
 
@@ -395,14 +421,15 @@ export default function Dashboard() {
 
             <button
               onClick={getAntrian}
-              className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg"
+              className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg w-full sm:w-auto"
             >
               Refresh
             </button>
 
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200">
+          {/* ===== TAMPILAN TABEL (md ke atas) ===== */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200">
 
             <table className="w-full">
 
@@ -462,30 +489,7 @@ export default function Dashboard() {
                       </td>
 
                       <td className="p-4">
-                        <div className="flex justify-center gap-2">
-
-                          <button
-                            onClick={() => handleDownloadPNG(item)}
-                            className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium"
-                          >
-                            PNG
-                          </button>
-
-                          <button
-                            onClick={() => handleDownloadJSON(item)}
-                            className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium"
-                          >
-                            JSON
-                          </button>
-
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium"
-                          >
-                            Hapus
-                          </button>
-
-                        </div>
+                        <ActionButtons item={item} />
                       </td>
                     </tr>
                   ))
@@ -494,6 +498,50 @@ export default function Dashboard() {
               </tbody>
 
             </table>
+
+          </div>
+
+          {/* ===== TAMPILAN CARD (khusus HP, di bawah md) ===== */}
+          <div className="md:hidden space-y-3">
+
+            {antrian.length === 0 ? (
+              <div className="py-16 text-center text-slate-400 rounded-2xl border border-slate-200">
+                Belum ada antrian produksi
+              </div>
+            ) : (
+              antrian.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="rounded-2xl border border-slate-200 p-4 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <div className="text-xs text-slate-400 font-medium">
+                        #{index + 1} &middot; ID {item.id}
+                      </div>
+                      <div className="font-semibold text-slate-800 text-base">
+                        {item.name}
+                      </div>
+                    </div>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusBadge(
+                        item.status
+                      )}`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div className="text-sm text-slate-500 mb-3">
+                    <span className="font-medium text-slate-600">Text: </span>
+                    {item.text || "-"}
+                  </div>
+
+                  <ActionButtons item={item} />
+                </div>
+              ))
+            )}
 
           </div>
 
@@ -508,7 +556,7 @@ export default function Dashboard() {
           onClick={() => !modal.onConfirm && closeModal()}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-[fadeInScale_0.15s_ease-out]"
+            className="w-full max-w-sm rounded-2xl bg-white p-5 sm:p-6 shadow-2xl animate-[fadeInScale_0.15s_ease-out]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 mb-4">
@@ -557,7 +605,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2">
               {modal.onConfirm && (
                 <button
                   onClick={closeModal}
