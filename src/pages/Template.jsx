@@ -1028,20 +1028,6 @@ export default function Template() {
         */}
         <div className="w-full flex flex-col items-center gap-4 sticky top-2 lg:top-4 z-10">
           {/*
-            ====== TOOLBAR ======
-            HANYA 3 hal yang diubah di sini, semua berprefix sm: (jadi
-            tidak berlaku di HP di bawah 640px, tampilan mobile tetap
-            persis seperti sebelumnya):
-              1. "sm:w-fit"        DIHAPUS  -> toolbar dibatasi oleh
-                 lebar induknya, tidak lagi bisa melebar sesukanya.
-              2. "sm:flex-nowrap"  -> "sm:flex-wrap" -> kalau ruang
-                 menyempit (browser di-zoom), tombol pindah ke baris
-                 berikutnya, bukan memaksa scroll ke luar halaman.
-              3. "sm:overflow-x-auto" DIHAPUS -> karena sudah wrap,
-                 scroll internal ini tidak diperlukan lagi dan dulu
-                 justru bisa memicu overflow di level halaman.
-            Struktur & class mobile (default, tanpa prefix) SAMA PERSIS
-            dengan kode asli.
           */}
           <div className="w-full sm:w-full bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 max-w-full">
             <div className="sm:flex-shrink-0">
