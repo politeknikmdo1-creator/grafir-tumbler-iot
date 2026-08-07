@@ -4,6 +4,14 @@ import tumblerImg from "../assets/tumbler1.png";
 
 const API_URL = "https://grafir-tumbler-backend-production.up.railway.app";
 
+// ===== Ukuran "basis desain" kartu tumbler (referensi desktop) =====
+// Semua posisi/ukuran di dalam kartu (gambar tumbler, area canvas, dsb)
+// dihitung relatif terhadap ukuran basis ini, lalu di-scale otomatis
+// mengikuti lebar kartu yang sebenarnya di layar (termasuk saat zoom
+// in/out browser atau resize window).
+const BASE_CARD_WIDTH = 350;
+const BASE_CARD_HEIGHT = 550;
+
 /**
  * Helper untuk menyusun beberapa fabric.Text/Line dalam baris-baris yang
  * otomatis di-center dan tidak saling tumpuk.
@@ -49,6 +57,10 @@ const layoutTexts = (rows, options = {}) => {
 export default function Template() {
   const canvasRef = useRef(null);
   const fabricCanvas = useRef(null);
+
+  // ===== Refs untuk auto-scale kartu tumbler =====
+  const cardOuterRef = useRef(null); // wrapper fluid (lebar mengikuti layar)
+  const cardInnerRef = useRef(null); // konten fixed-size (350x550) yang di-scale
 
   const [templates, setTemplates] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -200,6 +212,43 @@ export default function Template() {
 
     return () => {
       canvas.dispose();
+    };
+  }, []);
+
+  // ===== Auto-scale kartu tumbler mengikuti lebar wrapper =====
+  // ResizeObserver mendeteksi perubahan ukuran nyata elemen, jadi otomatis
+  // ikut menyesuaikan baik saat window di-resize maupun saat browser
+  // di-zoom in/out (di desktop maupun mobile), tanpa perlu breakpoint.
+  useEffect(() => {
+    const outer = cardOuterRef.current;
+    const inner = cardInnerRef.current;
+    if (!outer || !inner) return;
+
+    const applyScale = (width) => {
+      const scale = width / BASE_CARD_WIDTH;
+      inner.style.transform = `scale(${scale})`;
+    };
+
+    applyScale(outer.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        applyScale(width);
+      }
+    });
+
+    observer.observe(outer);
+
+    // fallback untuk browser lama / event zoom yang hanya trigger resize
+    const handleWindowResize = () => {
+      applyScale(outer.getBoundingClientRect().width);
+    };
+    window.addEventListener("resize", handleWindowResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", handleWindowResize);
     };
   }, []);
 
@@ -846,8 +895,14 @@ export default function Template() {
   return (
     <div className="flex flex-col lg:flex-row lg:h-full">
       {/* ===================== SIDEBAR KIRI ===================== */}
-      <div className="w-full lg:w-80 m-2 sm:m-4 bg-white rounded-2xl shadow-md p-4 flex flex-col h-auto lg:h-full">
-
+      <div
+        className="w-full m-2 sm:m-4 bg-white rounded-2xl shadow-md p-4 flex flex-col h-auto lg:h-full"
+        style={{
+          // Fluid width: mengecil/membesar halus mengikuti lebar layar/zoom,
+          // tapi tetap dibatasi supaya tidak terlalu sempit/lebar.
+          maxWidth: "clamp(260px, 26vw, 340px)",
+        }}
+      >
         {/* ===== Bagian ini TIDAK ikut scroll (statis) ===== */}
         <div className="flex-shrink-0">
           <h2 className="font-bold mb-4 text-lg text-gray-700 border-b pb-2">
@@ -912,7 +967,7 @@ export default function Template() {
               WordArt Suggestions
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={addWordArtPoliteknik}
                 className="border rounded-xl h-20 text-xs hover:bg-blue-50"
@@ -953,7 +1008,7 @@ export default function Template() {
 
               <button
                 onClick={addWordArtPromo20}
-                className="border rounded-xl h-20 text-sm hover:bg-blue-50 col-span-2 sm:col-span-3 lg:col-span-2"
+                className="border rounded-xl h-20 text-sm hover:bg-blue-50 col-span-2"
               >
                 GET UP TO <b className="text-xl">20% OFF</b>
                 <br />
@@ -972,7 +1027,7 @@ export default function Template() {
 
         {/* ===== Bagian ini YANG SCROLL (list template) ===== */}
         <div className="lg:flex-1 lg:overflow-y-auto pr-1 -mr-1">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3 pb-2">
+          <div className="grid grid-cols-2 gap-3 pb-2">
             {templates.map((t) => (
               <div
                 key={t.id}
@@ -1006,7 +1061,7 @@ export default function Template() {
             ))}
 
             {templates.length === 0 && (
-              <p className="col-span-2 sm:col-span-3 lg:col-span-2 text-center text-gray-400 text-sm py-6">
+              <p className="col-span-2 text-center text-gray-400 text-sm py-6">
                 Belum ada template tersimpan.
               </p>
             )}
@@ -1015,27 +1070,22 @@ export default function Template() {
       </div>
 
       {/* ===================== AREA CANVAS ===================== */}
-      <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6">
+      <div className="flex-1 flex flex-col items-center pt-4 lg:pt-6 px-2 sm:px-4 pb-6 min-w-0">
         {/*
           ====== GRUP STICKY: TOOLBAR + KANVAS TUMBLER ======
           Toolbar dan kartu tumbler dibungkus jadi SATU grup sticky, supaya
-          saat halaman di-scroll (terutama di HP), tumbler ikut "menempel"
-          bersama toolbar dan tidak lagi ikut ter-scroll naik/hilang dari
-          layar. Sebelumnya hanya toolbar yang sticky, sehingga tumbler
-          terlihat "bergerak sendiri" saat scroll.
+          saat halaman di-scroll, tumbler ikut "menempel" bersama toolbar.
         */}
-        <div className="w-full flex flex-col items-center gap-4 sticky top-2 lg:top-4 z-10">
+        <div className="w-full flex flex-col items-center gap-4 sticky top-2 lg:top-4 z-10 min-w-0">
           {/*
             ====== TOOLBAR ======
-            Desktop (breakpoint sm ke atas): HORIZONTAL dalam SATU BARIS saja
-            (flex-nowrap, tidak dibatasi max-width supaya tidak pecah ke baris
-            kedua). Kalau layar sempit, baris ini scroll ke samping (overflow-x-auto)
-            daripada wrap ke bawah.
-            Mobile (di bawah sm): kontrol dikelompokkan rapi secara vertikal
-            (bukan sekadar numpuk) supaya tidak terlihat kaku/berantakan.
+            Sekarang pakai flex-wrap fluid (bukan overflow-x-auto kaku),
+            jadi kalau ruang menyempit (mis. saat browser di-zoom in),
+            item toolbar akan turun ke baris berikutnya secara rapi,
+            bukan terpotong / memicu scrollbar horizontal di seluruh halaman.
           */}
-          <div className="w-full sm:w-fit bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-nowrap items-stretch sm:items-center gap-3 sm:overflow-x-auto max-w-full">
-            <div className="sm:flex-shrink-0">
+          <div className="w-full bg-white px-3 sm:px-4 py-3 rounded-2xl shadow-md flex flex-wrap items-center gap-3 max-w-full">
+            <div className="flex-1 min-w-[160px]">
               <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
                 Text
               </label>
@@ -1043,64 +1093,62 @@ export default function Template() {
                 value={customText}
                 onChange={handleTextChange}
                 placeholder="Masukkan Text"
-                className="border px-3 py-2 rounded-xl w-full sm:w-56 outline-none focus:ring-2 focus:ring-blue-400"
+                className="border px-3 py-2 rounded-xl w-full outline-none focus:ring-2 focus:ring-blue-400"
               />
             </div>
 
-            <div className="flex gap-3 sm:contents">
-              <div className="w-20 flex-shrink-0 sm:w-20">
-                <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
-                  Ukuran
-                </label>
-                <input
-                  type="number"
-                  value={fontSize}
-                  onChange={handleFontSizeChange}
-                  className="border px-3 py-2 w-full sm:w-20 rounded-xl outline-none"
-                />
-              </div>
-
-              <div className="flex-1 sm:flex-initial sm:flex-shrink-0 sm:flex sm:items-center sm:gap-2">
-                <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
-                  Rotasi
-                </label>
-                <span className="hidden sm:inline text-sm whitespace-nowrap">Rotasi</span>
-                <input
-                  type="range"
-                  min="-180"
-                  max="180"
-                  value={rotation}
-                  onChange={handleRotationChange}
-                  className="w-full sm:w-auto"
-                />
-              </div>
+            <div className="w-20 flex-shrink-0">
+              <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
+                Ukuran
+              </label>
+              <input
+                type="number"
+                value={fontSize}
+                onChange={handleFontSizeChange}
+                className="border px-3 py-2 w-full rounded-xl outline-none"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t sm:contents sm:border-0 sm:pt-0">
+            <div className="flex items-center gap-2 flex-shrink-0 min-w-[140px]">
+              <span className="text-sm whitespace-nowrap hidden sm:inline">Rotasi</span>
+              <label className="block text-xs font-semibold text-gray-500 sm:hidden">
+                Rotasi
+              </label>
+              <input
+                type="range"
+                min="-180"
+                max="180"
+                value={rotation}
+                onChange={handleRotationChange}
+                className="w-full sm:w-24"
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-2 flex-shrink-0">
               <button
                 onClick={handleUngroup}
-                className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+                className="whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
               >
                 Ungroup
               </button>
 
               <button
                 onClick={handleDuplicateObject}
-                className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+                className="whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
               >
                 Copy
               </button>
 
               <button
                 onClick={handleHapusObject}
-                className="sm:flex-shrink-0 sm:whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
+                className="whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
               >
                 Hapus Dipilih
               </button>
 
               <button
                 onClick={handleHapusCanvas}
-                className="sm:flex-shrink-0 sm:whitespace-nowrap bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
+                className="whitespace-nowrap bg-red-100 text-red-600 px-3 py-2 rounded-xl hover:bg-red-200 text-sm"
               >
                 Hapus Text & Logo
               </button>
@@ -1108,18 +1156,42 @@ export default function Template() {
 
             <button
               onClick={handleSelesai}
-              className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
+              className="w-full sm:w-auto flex-shrink-0 whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
             >
               ✓ Selesai & Kirim
             </button>
           </div>
 
-          {/* overflow-x-auto = jaring pengaman kalau layar lebih sempit dari kartu canvas */}
-          <div className="w-full overflow-x-auto flex justify-center">
-            <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center justify-center flex-shrink-0">
+          {/*
+            ====== KARTU TUMBLER (AUTO-SCALE) ======
+            cardOuter: lebar fluid mengikuti layar/zoom, tinggi mengikuti
+            aspect-ratio supaya proporsi tumbler tidak gepeng.
+            cardInner: ukuran tetap (BASE_CARD_WIDTH x BASE_CARD_HEIGHT),
+            di-scale otomatis via transform agar seluruh isi (gambar
+            tumbler, area kanvas, garis panduan) tetap presisi & rapi
+            di ukuran berapa pun.
+          */}
+          <div
+            ref={cardOuterRef}
+            className="w-full flex justify-center"
+            style={{
+              width: "clamp(260px, 34vw, 400px)",
+              aspectRatio: `${BASE_CARD_WIDTH} / ${BASE_CARD_HEIGHT}`,
+            }}
+          >
+            <div
+              ref={cardInnerRef}
+              className="bg-white p-6 rounded-2xl shadow relative flex items-center justify-center flex-shrink-0"
+              style={{
+                width: BASE_CARD_WIDTH,
+                height: BASE_CARD_HEIGHT,
+                transformOrigin: "top left",
+              }}
+            >
               <img
                 src={tumblerImg}
-                className="absolute h-[430px] sm:h-[480px] pointer-events-none"
+                className="absolute h-[480px] pointer-events-none"
+                alt="Tumbler"
               />
 
               <div className="absolute w-[150px] h-[320px] flex items-center justify-center">
