@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fabric } from "fabric";
 
-const API_URL = "https://grafir-tumbler-backend-production.up.railway.app";
+const API_URL = "https://grafir-tumbler-backend.onrender.com";
 
 export default function Dashboard() {
   const [status, setStatus] = useState({});

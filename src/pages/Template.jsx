@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import tumblerImg from "../assets/tumbler1.png";
 
-const API_URL = "https://grafir-tumbler-backend-production.up.railway.app";
+const API_URL = "https://grafir-tumbler-backend.onrender.com";
 
 /**
  * Helper untuk menyusun beberapa fabric.Text/Line dalam baris-baris yang
