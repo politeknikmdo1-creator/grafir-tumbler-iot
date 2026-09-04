@@ -240,6 +240,11 @@ atau coba ulang setelah job selesai.`
  const powerWatt = Number(status.power || 0);
  const machineStatus = String(status.machine_status || "Idle");
  const isRunning = machineStatus.toLowerCase() === "running";
+ const sensorOnline = status.sensor_online === true;
+ const dataAgeSeconds =
+ status.data_age_seconds !== null && status.data_age_seconds !== undefined
+ ? Number(status.data_age_seconds)
+ : null;
  return (
  <div className="space-y-6">
  <section className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
@@ -259,44 +264,88 @@ font-semibold bg-slate-100 text-slate-600">
  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50">
  <p className="text-sm text-slate-500">Kontrol Mesin</p>
- <p className={`mt-2 text-3xl font-bold ${Number(status.switch) === 1 ? "text-green-600" : "text-red500"}`}>
+ <p className={`mt-2 text-3xl font-bold ${Number(status.switch) === 1 ? "text-green-600" : "text-red-500"}`}>
  {Number(status.switch) === 1 ? "ON" : "OFF"}
  </p>
  <div className="flex gap-2 mt-4">
- <button onClick={() => handlePower(1)} className="flex-1 py-2 rounded-lg bg-green-500 hover:bg-green600 text-white font-semibold">ON</button>
+ <button onClick={() => handlePower(1)} className="flex-1 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold">ON</button>
  <button onClick={() => handlePower(0)} className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 
 text-white font-semibold">OFF</button>
  </div>
  </div>
  <div
  className={`border rounded-2xl p-5 ${
- isRunning
+ !sensorOnline
+ ? "border-red-200 bg-red-50"
+ : isRunning
  ? "border-emerald-200 bg-emerald-50"
  : "border-slate-200 bg-slate-50"
  }`}
  >
- <p className={`text-sm ${isRunning ? "text-emerald-700" : "text-slate-500"}`}>
+ <p
+ className={`text-sm ${
+ !sensorOnline
+ ? "text-red-700"
+ : isRunning
+ ? "text-emerald-700"
+ : "text-slate-500"
+ }`}
+ >
  Status Mesin
  </p>
  <div className="mt-2 flex items-center gap-3">
  <span
  className={`h-3 w-3 rounded-full ${
- isRunning ? "bg-emerald-500 animate-pulse" : "bg-slate-400"
+ !sensorOnline
+ ? "bg-red-500"
+ : isRunning
+ ? "bg-emerald-500 animate-pulse"
+ : "bg-slate-400"
  }`}
  />
  <p
  className={`text-3xl font-bold ${
- isRunning ? "text-emerald-700" : "text-slate-700"
+ !sensorOnline
+ ? "text-red-700"
+ : isRunning
+ ? "text-emerald-700"
+ : "text-slate-700"
  }`}
  >
  {isRunning ? "RUNNING" : "IDLE"}
  </p>
  </div>
- <p className={`mt-3 text-xs ${isRunning ? "text-emerald-600" : "text-slate-500"}`}>
- {isRunning
+ <p
+ className={`mt-3 text-xs ${
+ !sensorOnline
+ ? "text-red-600"
+ : isRunning
+ ? "text-emerald-600"
+ : "text-slate-500"
+ }`}
+ >
+ {!sensorOnline
+ ? "Data PZEM tidak diperbarui dalam batas waktu"
+ : isRunning
  ? "Mesin terdeteksi sedang bekerja"
  : "Mesin tidak sedang melakukan proses grafir"}
  </p>
+ <div className="mt-4">
+ <span
+ className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+ sensorOnline
+ ? "bg-green-100 text-green-700"
+ : "bg-red-100 text-red-700"
+ }`}
+ >
+ {sensorOnline ? "PZEM Terhubung" : "PZEM Terputus"}
+ </span>
+ </div>
+ {dataAgeSeconds !== null && (
+ <p className="mt-2 text-xs text-slate-400">
+ Data terakhir: {dataAgeSeconds} detik lalu
+ </p>
+ )}
  </div>
  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50">
  <p className="text-sm text-slate-500">Tegangan</p>
@@ -306,7 +355,7 @@ text-slate-500">V</span></p>
  </div>
  <div className="border border-blue-200 rounded-2xl p-5 bg-blue-50">
  <p className="text-sm text-blue-600">Arus</p>
- <p className="mt-2 text-3xl font-bold text-blue-700">{current.toFixed(3)} <span className="text-lg textblue-500">A</span></p>
+ <p className="mt-2 text-3xl font-bold text-blue-700">{current.toFixed(3)} <span className="text-lg text-blue-500">A</span></p>
  <p className="mt-3 text-xs text-blue-600">Current real-time dari PZEM</p>
  </div>
  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50">
@@ -326,7 +375,7 @@ text-slate-500">W</span></p>
  <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Antrian Produksi</h2>
  <p className="text-slate-500 text-sm">Total Antrian: {antrian.length}</p>
  </div>
- <button onClick={refreshDashboard} className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white roundedxl shadow-lg w-full sm:w-auto">Refresh</button>
+ <button onClick={refreshDashboard} className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg w-full sm:w-auto">Refresh</button>
  </div>
  {activeJob && (
  <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
@@ -393,7 +442,7 @@ onClick={closeModal}>
  <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
  <h3 className="text-lg font-bold text-slate-800">{modal.title}</h3>
  <p className="mt-2 text-sm leading-relaxed text-slate-500">{modal.message}</p>
- <button onClick={closeModal} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 font-semibold textwhite hover:bg-blue-700">OK</button>
+ <button onClick={closeModal} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">OK</button>
  </div>
  </div>
  )}
