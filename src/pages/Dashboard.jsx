@@ -147,15 +147,20 @@ export default function Dashboard() {
  const tempCanvas = new fabric.StaticCanvas(canvasElement, {
  width: sourceWidthPx,
  height: sourceHeightPx,
- backgroundColor: "transparent",
+ backgroundColor: "#ffffff",
  renderOnAddRemove: false,
  });
  try {
  await new Promise((resolve, reject) => {
  try {
  tempCanvas.loadFromJSON(designData, () => {
+ // Template menyimpan background transparan untuk editor.
+ // Saat export final untuk LaserGRBL, paksa background putih
+ // agar object hitam selalu terbaca jelas dan konsisten.
+ tempCanvas.setBackgroundColor("#ffffff", () => {
  tempCanvas.renderAll();
  resolve();
+ });
  });
  } catch (error) {
  reject(error);
@@ -224,15 +229,20 @@ export default function Dashboard() {
  const tempCanvas = new fabric.StaticCanvas(canvasElement, {
  width: 2000,
  height: 2000,
- backgroundColor: "transparent",
+ backgroundColor: "#ffffff",
  renderOnAddRemove: false,
  });
  try {
  await new Promise((resolve, reject) => {
  try {
  tempCanvas.loadFromJSON(designData, () => {
+ // Template menyimpan background transparan untuk editor.
+ // Saat export final untuk LaserGRBL, paksa background putih
+ // agar object hitam selalu terbaca jelas dan konsisten.
+ tempCanvas.setBackgroundColor("#ffffff", () => {
  tempCanvas.renderAll();
  resolve();
+ });
  });
  } catch (error) {
  reject(error);
