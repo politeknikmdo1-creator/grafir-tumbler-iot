@@ -7,16 +7,15 @@ const MAX_CANVAS_HEIGHT = 320;
 const getCanvasDimensions = (workWidthMm, workHeightMm) => {
  const widthMm = Math.max(1, Number(workWidthMm) || 1);
  const heightMm = Math.max(1, Number(workHeightMm) || 1);
- const aspectRatio = widthMm / heightMm;
- let width = MAX_CANVAS_WIDTH;
- let height = width / aspectRatio;
- if (height > MAX_CANVAS_HEIGHT) {
- height = MAX_CANVAS_HEIGHT;
- width = height * aspectRatio;
- }
+ // Gunakan satu faktor skala untuk lebar dan tinggi supaya rasio area kerja
+ // selalu sama dengan ukuran fisik yang dimasukkan pengguna.
+ const previewScale = Math.min(
+ MAX_CANVAS_WIDTH / widthMm,
+ MAX_CANVAS_HEIGHT / heightMm
+ );
  return {
- width: Math.max(60, Math.round(width)),
- height: Math.max(120, Math.round(height)),
+ width: Math.max(1, Math.round(widthMm * previewScale)),
+ height: Math.max(1, Math.round(heightMm * previewScale)),
  };
 };
 // Preset awal. Semua nilai tetap dapat diubah pengguna karena ukuran tumbler
@@ -1170,32 +1169,28 @@ export default function Template() {
  <h2 className="font-bold mb-4 text-lg text-gray-700 border-b pb-2">
  Editor Desain
  </h2>
- <label className="flex items-center justify-center w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-semibold rounded-xl cursor-pointer hover:from-indigo-600 hover:to-blue-700 transition transform
- hover:scale-105 shadow-md mb-4 active:scale-95">
+ <label className="group flex w-full cursor-pointer items-center gap-3 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 
+px-3 py-2.5 text-white shadow-md transition hover:from-indigo-600 hover:to-blue-700 active:scale-[0.99] mb-4">
+ <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/25 
+transition group-hover:bg-white/20">
  <svg
- className="w-5 h-5 mr-2 flex-shrink-0"
+ className="h-6 w-6"
+ viewBox="0 0 24 24"
  fill="none"
  stroke="currentColor"
- viewBox="0 0 24 24"
  aria-hidden="true"
  >
- <rect
- x="3"
- y="5"
- width="14"
- height="14"
- rx="2"
- strokeWidth={2}
- />
- <circle cx="8" cy="10" r="1.5" strokeWidth={2} />
- <path
- strokeLinecap="round"
- strokeLinejoin="round"
- strokeWidth={2}
- d="M4.5 17l4-4 2.5 2.5 2-2L16 16.5M19 8h4m-2-2v4"
- />
+ <rect x="3" y="4" width="14" height="16" rx="2.5" strokeWidth="1.8" />
+ <circle cx="8" cy="9" r="1.5" strokeWidth="1.8" />
+ <path d="M4.5 17l4.1-4.1 2.6 2.6 2.2-2.2 2.1 2.1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+ <circle cx="19" cy="7" r="3.5" fill="currentColor" stroke="none" />
+ <path d="M19 5.4v3.2M17.4 7h3.2" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
  </svg>
- <span className="text-sm sm:text-base">Upload Logo / Gambar</span>
+ </span>
+ <span className="min-w-0 text-left">
+ <span className="block text-sm font-semibold leading-tight">Upload Logo / Gambar</span>
+ <span className="mt-0.5 block text-[10px] font-normal text-blue-100">PNG, JPG, SVG, atau WEBP</span>
+ </span>
  <input
  type="file"
  accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
@@ -1326,7 +1321,8 @@ export default function Template() {
  onClick={() => handleSelect(t)}
  className="border p-2 cursor-pointer rounded-xl text-center bg-gray-50 hover:bg-blue-100 relative overflow-hidden"
  >
- <div className="w-full h-24 flex items-center justify-center bg-white rounded-lg mb-2 overflow-hidden border border-gray-100">
+ <div className="w-full h-24 flex items-center justify-center bg-white rounded-lg mb-2 overflow-hidden border 
+border-gray-100">
  {t.file_path ? (
  <img
  src={`${API_URL}${t.file_path}`}
@@ -1445,12 +1441,13 @@ export default function Template() {
  />
  </label>
  </div>
- <div className="mt-3 flex flex-wrap gap-2 text-xs">
- <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
- Area kerja: {mmToDisplay(workWidthMm)} × {mmToDisplay(workHeightMm)} {unit}
+ <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+ <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+ Area kerja aktif: {mmToDisplay(workWidthMm)} × {mmToDisplay(workHeightMm)} {unit}
  </span>
  <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
- Output: {mmToDisplay(workWidthMm * (SCALE_FACTORS[scaleMode] || 1))} × {mmToDisplay(workHeightMm * (SCALE_FACTORS[scaleMode] || 1))} {unit}
+ Output: {mmToDisplay(workWidthMm * (SCALE_FACTORS[scaleMode] || 1))} × {mmToDisplay(workHeightMm * (SCALE_FACTORS[scaleMode] 
+|| 1))} {unit}
  </span>
  <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">
  LaserGRBL: gunakan 1:1 untuk ukuran fisik langsung
@@ -1467,7 +1464,8 @@ export default function Template() {
  <div className="w-full flex flex-col items-center gap-4 sticky top-2 lg:top-4 z-10">
  {/*
  */}
- <div className="w-full sm:w-full bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 max-w-full">
+ <div className="w-full sm:w-full bg-white px-4 py-3 rounded-2xl shadow-md flex flex-col sm:flex-row sm:flex-wrap items-stretch 
+sm:items-center gap-3 max-w-full">
  <div className="sm:flex-shrink-0">
  <label className="block text-xs font-semibold text-gray-500 mb-1 sm:hidden">
  Text
@@ -1509,19 +1507,22 @@ export default function Template() {
  <div className="grid grid-cols-2 gap-2 pt-2 border-t sm:contents sm:border-0 sm:pt-0">
  <button
  onClick={handleUngroup}
- className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-200 text-sm"
+ className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-purple-100 text-purple-600 px-3 py-2 rounded-xl 
+hover:bg-purple-200 text-sm"
  >
  Ungroup
  </button>
  <button
  onClick={handleDuplicateObject}
- className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl hover:bg-blue-200 text-sm"
+ className="mt-2 sm:mt-0 sm:flex-shrink-0 sm:whitespace-nowrap bg-blue-100 text-blue-600 px-3 py-2 rounded-xl 
+hover:bg-blue-200 text-sm"
  >
  Copy
  </button>
  <button
  onClick={handleHapusObject}
- className="sm:flex-shrink-0 sm:whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 text-sm"
+ className="sm:flex-shrink-0 sm:whitespace-nowrap bg-orange-100 text-orange-600 px-3 py-2 rounded-xl hover:bg-orange-200 
+text-sm"
  >
  Hapus Dipilih
  </button>
@@ -1534,8 +1535,8 @@ export default function Template() {
  </div>
  <button
  onClick={handleSelesai}
- className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md
- text-sm"
+ className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white 
+px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md text-sm"
  >
  Selesai & Kirim
  </button>
@@ -1615,7 +1616,8 @@ export default function Template() {
  </div>
  {/* Preview tumbler. Rasio area kerja mengikuti ukuran fisik yang dipilih. */}
  <div className="w-full overflow-x-auto flex justify-center">
- <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center justify-center flex-shrink-0">
+ <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center 
+justify-center flex-shrink-0">
  <img
  src={tumblerImg}
  className="absolute h-[430px] sm:h-[480px] pointer-events-none"
@@ -1628,20 +1630,23 @@ export default function Template() {
  }}
  >
  <div className="absolute inset-0 pointer-events-none z-0">
- <div className="absolute inset-0 border-2 border-dashed border-green-400 rounded-md"></div>
- <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-3 py-1 text-[10px] font-semibold text-green-700 shadow">
- {mmToDisplay(workWidthMm)} × {mmToDisplay(workHeightMm)} {unit} - {scaleMode}
+ <div className="absolute inset-0 rounded-md border-2 border-dashed border-emerald-400 bg-emerald-50/5"></div>
+ <div className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-emerald-100 
+bg-white px-3 py-1 text-[10px] font-bold text-emerald-700 shadow-sm">
+ Area {mmToDisplay(workWidthMm)} × {mmToDisplay(workHeightMm)} {unit} · {scaleMode}
  </div>
- <span className="absolute -left-8 top-1 text-[9px] text-green-700">0</span>
- <span className="absolute -right-12 top-1 text-[9px] text-green-700">
- {mmToDisplay(workWidthMm)} {unit}
- </span>
- <span className="absolute -left-12 bottom-0 text-[9px] text-green-700">
- {mmToDisplay(workHeightMm)} {unit}
- </span>
- <span className="absolute left-1/2 -bottom-7 -translate-x-1/2 whitespace-nowrap text-[9px] font-medium text-green-700">
- Area kerja mengikuti rasio fisik
- </span>
+ <div className="absolute -bottom-6 left-0 right-0 flex items-center gap-1 text-[9px] font-semibold text-emerald-700">
+ <span className="h-px flex-1 bg-emerald-400"></span>
+ <span>{mmToDisplay(workWidthMm)} {unit}</span>
+ <span className="h-px flex-1 bg-emerald-400"></span>
+ </div>
+ <div className="absolute -right-12 top-0 bottom-0 flex flex-col items-center justify-center text-[9px] font-semibold 
+text-emerald-700">
+ <span className="w-px flex-1 bg-emerald-400"></span>
+ <span className="my-1 whitespace-nowrap">{mmToDisplay(workHeightMm)} {unit}</span>
+ <span className="w-px flex-1 bg-emerald-400"></span>
+ </div>
+ <span className="absolute -left-5 -top-4 rounded bg-white/90 px-1 text-[9px] font-semibold text-emerald-700">0</span>
  </div>
  <canvas
  ref={canvasRef}
@@ -1679,7 +1684,8 @@ export default function Template() {
  strokeLinecap="round"
  strokeLinejoin="round"
  strokeWidth={2}
- d="M12 9v2m0 4h.01M10.29 3.86l-8.18 14.14A1.5 1.5 0 003.5 20.5h17a1.5 1.5 0 001.39-2.5L13.71 3.86a1.5 1.5 0 00-2.42 0z"
+ d="M12 9v2m0 4h.01M10.29 3.86l-8.18 14.14A1.5 1.5 0 003.5 20.5h17a1.5 1.5 0 001.39-2.5L13.71 3.86a1.5 1.5 0 00-2.42 
+0z"
  />
  </svg>
  ) : (
@@ -1756,7 +1762,8 @@ export default function Template() {
  closeInputModal();
  }
  }}
- className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+ className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none transition focus:border-blue-400 
+focus:ring-2 focus:ring-blue-100"
  />
  <div className="mt-6 flex justify-end gap-2">
  <button
@@ -1768,7 +1775,8 @@ export default function Template() {
  <button
  disabled={!inputModal.value.trim()}
  onClick={() => inputModal.onSave(inputModal.value)}
- className="rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-600 hover:to-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+ className="rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-md 
+transition hover:from-green-600 hover:to-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
  >
  Simpan
  </button>
