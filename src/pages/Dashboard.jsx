@@ -85,6 +85,139 @@ export default function Dashboard() {
  typeof item.design_json === "string"
  ? JSON.parse(item.design_json)
  : item.design_json;
+ const metadata = designData?.editor_metadata || null;
+ const physicalArea = metadata?.tumbler || null;
+ const editorMeta = metadata?.editor || null;
+ const laserMeta = metadata?.lasergrbl || null;
+ const safeName =
+ String(item.name || "design")
+ .trim()
+ .replace(/[^a-z0-9_-]+/gi, "_")
+ .replace(/^_+|_+$/g, "") || "design";
+ // Desain baru dari Template menyimpan ukuran fisik area kerja di
+ // editor_metadata. Untuk desain tersebut PNG tidak lagi di-crop hanya
+ // mengikuti bounding-box object, tetapi diexport sebagai SELURUH area
+ // kerja. Dengan begitu posisi X/Y object terhadap titik 0,0 tetap sama
+ // saat gambar dibuka di LaserGRBL.
+ if (physicalArea && editorMeta) {
+ const scaleFactor = Number(editorMeta.scale_factor || 1) || 1;
+ const scaleMode = String(editorMeta.scale || "1:1");
+ const sourceWidthPx = Math.max(
+ 1,
+ Math.round(Number(editorMeta.canvas_width_px) || 1)
+ );
+ const sourceHeightPx = Math.max(
+ 1,
+ Math.round(Number(editorMeta.canvas_height_px) || 1)
+ );
+ const outputWidthMm = Math.max(
+ 0.1,
+ Number(laserMeta?.recommended_width_mm) ||
+ Number(physicalArea.work_width_mm || 1) * scaleFactor
+ );
+ const outputHeightMm = Math.max(
+ 0.1,
+ Number(laserMeta?.recommended_height_mm) ||
+ Number(physicalArea.work_height_mm || 1) * scaleFactor
+ );
+ // 10 px/mm ~= 254 DPI. Cukup detail untuk image engraving dan masih
+ // aman untuk browser. Untuk area custom yang sangat besar resolusi
+ // otomatis diturunkan agar sisi terpanjang tidak melebihi 6000 px.
+ const BASE_PIXELS_PER_MM = 10;
+ const MAX_EXPORT_SIDE_PX = 6000;
+ const pixelsPerMm = Math.max(
+ 1,
+ Math.min(
+ BASE_PIXELS_PER_MM,
+ MAX_EXPORT_SIDE_PX / outputWidthMm,
+ MAX_EXPORT_SIDE_PX / outputHeightMm
+ )
+ );
+ const outputWidthPx = Math.max(
+ 1,
+ Math.round(outputWidthMm * pixelsPerMm)
+ );
+ const outputHeightPx = Math.max(
+ 1,
+ Math.round(outputHeightMm * pixelsPerMm)
+ );
+ const canvasElement = document.createElement("canvas");
+ canvasElement.width = sourceWidthPx;
+ canvasElement.height = sourceHeightPx;
+ const tempCanvas = new fabric.StaticCanvas(canvasElement, {
+ width: sourceWidthPx,
+ height: sourceHeightPx,
+ backgroundColor: "transparent",
+ renderOnAddRemove: false,
+ });
+ try {
+ await new Promise((resolve, reject) => {
+ try {
+ tempCanvas.loadFromJSON(designData, () => {
+ tempCanvas.renderAll();
+ resolve();
+ });
+ } catch (error) {
+ reject(error);
+ }
+ });
+ const objects = tempCanvas.getObjects();
+ if (objects.length === 0) {
+ throw new Error("Design tidak memiliki object yang dapat diexport");
+ }
+ // Konversi seluruh koordinat Fabric dari preview editor ke ukuran
+ // raster final. Rasio X/Y dipertahankan sehingga posisi fisik object
+ // tetap sesuai metadata Template.
+ const scaleX = outputWidthPx / sourceWidthPx;
+ const scaleY = outputHeightPx / sourceHeightPx;
+ objects.forEach((object) => {
+ object.set({
+ left: Number(object.left || 0) * scaleX,
+ top: Number(object.top || 0) * scaleY,
+ scaleX: Number(object.scaleX || 1) * scaleX,
+ scaleY: Number(object.scaleY || 1) * scaleY,
+ });
+ object.setCoords();
+ });
+ tempCanvas.setDimensions({
+ width: outputWidthPx,
+ height: outputHeightPx,
+ });
+ tempCanvas.renderAll();
+ const dataUrl = tempCanvas.toDataURL({
+ format: "png",
+ quality: 1,
+ multiplier: 1,
+ left: 0,
+ top: 0,
+ width: outputWidthPx,
+ height: outputHeightPx,
+ });
+ const dimensionName = `${String(outputWidthMm).replace(
+ ".",
+ "_"
+ )}x${String(outputHeightMm).replace(".", "_")}mm`;
+ const scaleName = scaleMode.replace(":", "to");
+ const link = document.createElement("a");
+ link.href = dataUrl;
+ link.download = `job-${item.id}-${safeName}-${dimensionName}-${scaleName}.png`;
+ document.body.appendChild(link);
+ link.click();
+ document.body.removeChild(link);
+ return {
+ physical: true,
+ widthMm: Math.round(outputWidthMm * 100) / 100,
+ heightMm: Math.round(outputHeightMm * 100) / 100,
+ scaleMode,
+ widthPx: outputWidthPx,
+ heightPx: outputHeightPx,
+ };
+ } finally {
+ tempCanvas.dispose();
+ }
+ }
+ // Fallback untuk job/template lama yang belum mempunyai editor_metadata.
+ // Mekanisme crop lama tetap dipertahankan agar data lama tidak rusak.
  const canvasElement = document.createElement("canvas");
  canvasElement.width = 2000;
  canvasElement.height = 2000;
@@ -115,8 +248,6 @@ export default function Dashboard() {
  );
  let minLeft = Math.min(...bounds.map((box) => box.left));
  let minTop = Math.min(...bounds.map((box) => box.top));
- // Jika ada object dengan posisi negatif, geser seluruh design agar
- // tidak terpotong saat diexport menjadi PNG.
  const shiftX = minLeft < padding ? padding - minLeft : 0;
  const shiftY = minTop < padding ? padding - minTop : 0;
  if (shiftX !== 0 || shiftY !== 0) {
@@ -159,17 +290,17 @@ export default function Dashboard() {
  width: exportWidth,
  height: exportHeight,
  });
- const safeName =
- String(item.name || "design")
- .trim()
- .replace(/[^a-z0-9_-]+/gi, "_")
- .replace(/^_+|_+$/g, "") || "design";
  const link = document.createElement("a");
  link.href = dataUrl;
  link.download = `job-${item.id}-${safeName}.png`;
  document.body.appendChild(link);
  link.click();
  document.body.removeChild(link);
+ return {
+ physical: false,
+ widthPx: exportWidth * 2,
+ heightPx: exportHeight * 2,
+ };
  } finally {
  tempCanvas.dispose();
  }
@@ -201,17 +332,21 @@ export default function Dashboard() {
  return;
  }
  let downloadBerhasil = true;
+ let downloadInfo = null;
  try {
- await downloadJobDesign(item);
+ downloadInfo = await downloadJobDesign(item);
  } catch (downloadError) {
  downloadBerhasil = false;
  console.log("DOWNLOAD design error:", downloadError);
  }
  await refreshDashboard();
  if (downloadBerhasil) {
+ const ukuranInfo = downloadInfo?.physical
+ ? ` PNG area kerja ${downloadInfo.widthMm} x ${downloadInfo.heightMm} mm (${downloadInfo.scaleMode}) berhasil didownload.`
+ : " File PNG desain berhasil didownload.";
  showAlert(
  "Job Masuk Persiapan",
- `Job #${item.id} sekarang berstatus Persiapan. Runtime mulai dihitung dan file PNG desain otomatis didownload.`
+ `Job #${item.id} sekarang berstatus Persiapan. Runtime mulai dihitung.${ukuranInfo}`
  );
  } else {
  showAlert(
@@ -343,8 +478,7 @@ export default function Dashboard() {
  PZEM yang diterima API.
  </p>
  </div>
- <div className="inline-flex self-start sm:self-auto items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold
- bg-slate-100 text-slate-600">
+ <div className="inline-flex self-start sm:self-auto items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold bg-slate-100 text-slate-600">
  Update otomatis setiap 2 detik
  </div>
  </div>
@@ -373,8 +507,7 @@ export default function Dashboard() {
  }
  onClick={() => handlePower(switchOn ? 0 : 1)}
  disabled={powerUpdating}
- className={`relative inline-flex h-8 w-16 shrink-0 items-center rounded-full transition-colors
- focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+ className={`relative inline-flex h-8 w-16 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
  switchOn ? "bg-green-500" : "bg-slate-300"
  } ${
  powerUpdating
@@ -591,8 +724,7 @@ export default function Dashboard() {
  </span>
  </td>
  <td className="p-4 text-center">
- <span className="inline-flex rounded-lg bg-slate-100 px-3 py-2 font-mono text-sm font-semibold
- tabular-nums text-slate-700">
+ <span className="inline-flex rounded-lg bg-slate-100 px-3 py-2 font-mono text-sm font-semibold tabular-nums text-slate-700">
  {formatSeconds(getRuntimeSeconds(item))}
  </span>
  </td>
