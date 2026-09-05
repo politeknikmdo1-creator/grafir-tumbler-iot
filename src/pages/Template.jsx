@@ -2,9 +2,23 @@ import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
 import tumblerImg from "../assets/tumbler1.png";
 const API_URL = "https://grafir-tumbler-backend.onrender.com";
-const CANVAS_WIDTH = 150;
-const CANVAS_HEIGHT = 320;
-const EXPORT_PX_PER_MM = 10;
+const MAX_CANVAS_WIDTH = 150;
+const MAX_CANVAS_HEIGHT = 320;
+const getCanvasDimensions = (workWidthMm, workHeightMm) => {
+ const widthMm = Math.max(1, Number(workWidthMm) || 1);
+ const heightMm = Math.max(1, Number(workHeightMm) || 1);
+ const aspectRatio = widthMm / heightMm;
+ let width = MAX_CANVAS_WIDTH;
+ let height = width / aspectRatio;
+ if (height > MAX_CANVAS_HEIGHT) {
+ height = MAX_CANVAS_HEIGHT;
+ width = height * aspectRatio;
+ }
+ return {
+ width: Math.max(60, Math.round(width)),
+ height: Math.max(120, Math.round(height)),
+ };
+};
 // Preset awal. Semua nilai tetap dapat diubah pengguna karena ukuran tumbler
 // di lapangan dapat berbeda walaupun kapasitasnya sama.
 const TUMBLER_PRESETS = {
@@ -103,6 +117,12 @@ export default function Template() {
  );
  const [unit, setUnit] = useState("mm");
  const [scaleMode, setScaleMode] = useState("1:1");
+ const [canvasSize, setCanvasSize] = useState(() =>
+ getCanvasDimensions(
+ TUMBLER_PRESETS.slim20.workWidthMm,
+ TUMBLER_PRESETS.slim20.workHeightMm
+ )
+ );
  const [objectList, setObjectList] = useState([]);
  const [activeObjectId, setActiveObjectId] = useState(null);
  const [objectMetrics, setObjectMetrics] = useState(null);
@@ -397,7 +417,7 @@ export default function Template() {
  recommended_width_mm: round2(workWidthMm * scaleFactor),
  recommended_height_mm: round2(workHeightMm * scaleFactor),
  note:
- "Import PNG menggunakan ukuran output di atas agar posisi dan ukuran fisik mengikuti editor.",
+ "Gunakan metadata ukuran dan koordinat ini saat PNG final dibuat dari Dashboard pada tahap Start.",
  },
  };
  };
@@ -407,104 +427,6 @@ export default function Template() {
  ...fabricJson,
  editor_metadata: buildEditorMetadata(canvas),
  });
- };
- const downloadUrl = (url, fileName) => {
- const link = document.createElement("a");
- link.href = url;
- link.download = fileName;
- document.body.appendChild(link);
- link.click();
- document.body.removeChild(link);
- };
- const downloadBlob = (blob, fileName) => {
- const url = URL.createObjectURL(blob);
- downloadUrl(url, fileName);
- setTimeout(() => URL.revokeObjectURL(url), 1000);
- };
- const sanitizeFileName = (value) =>
- String(value || "design-tumbler")
- .trim()
- .replace(/[^a-z0-9_-]+/gi, "_")
- .replace(/^_+|_+$/g, "") || "design-tumbler";
- const exportDesignFiles = async (fileName) => {
- const canvas = fabricCanvas.current;
- if (!canvas) return;
- const objects = canvas.getObjects();
- if (objects.length === 0) {
- showAlert("Canvas Masih Kosong", "Masukkan text atau logo dulu sebelum download.");
- return;
- }
- const cleanName = sanitizeFileName(fileName);
- const scaleFactor = SCALE_FACTORS[scaleMode] || 1;
- const outputWidthMm = Math.max(1, workWidthMm * scaleFactor);
- const outputHeightMm = Math.max(1, workHeightMm * scaleFactor);
- const outputWidthPx = Math.max(1, Math.round(outputWidthMm * EXPORT_PX_PER_MM));
- const outputHeightPx = Math.max(1, Math.round(outputHeightMm * EXPORT_PX_PER_MM));
- // Export seluruh area kerja, bukan crop object, supaya koordinat tidak hilang.
- const previewDataUrl = canvas.toDataURL({
- format: "png",
- quality: 1,
- multiplier: 4,
- left: 0,
- top: 0,
- width: canvas.width,
- height: canvas.height,
- });
- const img = new Image();
- const loaded = new Promise((resolve, reject) => {
- img.onload = resolve;
- img.onerror = reject;
- });
- img.src = previewDataUrl;
- await loaded;
- const outputCanvas = document.createElement("canvas");
- outputCanvas.width = outputWidthPx;
- outputCanvas.height = outputHeightPx;
- const ctx = outputCanvas.getContext("2d");
- ctx.clearRect(0, 0, outputWidthPx, outputHeightPx);
- ctx.drawImage(img, 0, 0, outputWidthPx, outputHeightPx);
- const pngDataUrl = outputCanvas.toDataURL("image/png", 1);
- downloadUrl(pngDataUrl, `${cleanName}.png`);
- const metadata = buildEditorMetadata(canvas);
- metadata.export = {
- png_file: `${cleanName}.png`,
- metadata_file: `${cleanName}-metadata.json`,
- output_width_px: outputWidthPx,
- output_height_px: outputHeightPx,
- px_per_mm: EXPORT_PX_PER_MM,
- output_width_mm: round2(outputWidthMm),
- output_height_mm: round2(outputHeightMm),
- };
- downloadBlob(
- new Blob([JSON.stringify(metadata, null, 2)], {
- type: "application/json;charset=utf-8",
- }),
- `${cleanName}-metadata.json`
- );
- };
- const handleDownloadDesign = () => {
- const canvas = fabricCanvas.current;
- if (!canvas || canvas.getObjects().length === 0) {
- showAlert("Canvas Masih Kosong", "Masukkan text atau logo dulu sebelum download.");
- return;
- }
- showInputModal(
- "Nama file download",
- async (fileName) => {
- closeInputModal();
- try {
- await exportDesignFiles(fileName);
- showAlert(
- "Download Berhasil",
- "PNG area kerja dan file metadata koordinat berhasil dibuat. Untuk LaserGRBL, gunakan ukuran output yang tercantum pada file metadata."
- );
- } catch (error) {
- console.log("DOWNLOAD design error:", error);
- showAlert("Download Gagal", "File desain gagal dibuat.");
- }
- },
- selected?.name || "design-tumbler"
- );
  };
  const getTemplates = async () => {
  try {
@@ -526,9 +448,13 @@ export default function Template() {
  fabric.Object.prototype.cornerStrokeColor = "#1d4ed8";
  fabric.Object.prototype.borderColor = "#3b82f6";
  fabric.Object.prototype.cornerSize = 8;
+ const initialCanvasSize = getCanvasDimensions(
+ TUMBLER_PRESETS.slim20.workWidthMm,
+ TUMBLER_PRESETS.slim20.workHeightMm
+ );
  const canvas = new fabric.Canvas(canvasRef.current, {
- width: CANVAS_WIDTH,
- height: CANVAS_HEIGHT,
+ width: initialCanvasSize.width,
+ height: initialCanvasSize.height,
  backgroundColor: "transparent",
  preserveObjectStacking: true,
  });
@@ -578,15 +504,81 @@ export default function Template() {
  };
  }, []);
  useEffect(() => {
- editorSettingsRef.current = {
- workWidthMm,
- workHeightMm,
- };
  const canvas = fabricCanvas.current;
- if (canvas) {
+ const previousSettings = editorSettingsRef.current;
+ const nextSettings = {
+ workWidthMm: Math.max(1, Number(workWidthMm) || 1),
+ workHeightMm: Math.max(1, Number(workHeightMm) || 1),
+ };
+ if (!canvas) {
+ editorSettingsRef.current = nextSettings;
+ setCanvasSize(getCanvasDimensions(nextSettings.workWidthMm, nextSettings.workHeightMm));
+ return;
+ }
+ // Simpan ukuran/posisi fisik lama supaya perubahan area kerja tidak
+ // membuat logo atau teks tiba-tiba bergeser dalam satuan mm.
+ const snapshots = canvas.getObjects().map((obj) => ({
+ obj,
+ metrics: getObjectPhysicalMetrics(obj, canvas),
+ }));
+ const nextCanvasSize = getCanvasDimensions(
+ nextSettings.workWidthMm,
+ nextSettings.workHeightMm
+ );
+ canvas.setDimensions({
+ width: nextCanvasSize.width,
+ height: nextCanvasSize.height,
+ });
+ editorSettingsRef.current = nextSettings;
+ setCanvasSize(nextCanvasSize);
+ snapshots.forEach(({ obj, metrics }) => {
+ if (!metrics) return;
+ obj.setCoords();
+ const currentRect = obj.getBoundingRect(true, true);
+ const targetWidthMm = Math.min(
+ Math.max(0.1, metrics.widthMm),
+ nextSettings.workWidthMm
+ );
+ const targetHeightMm = Math.min(
+ Math.max(0.1, metrics.heightMm),
+ nextSettings.workHeightMm
+ );
+ const targetWidthPx =
+ (targetWidthMm / nextSettings.workWidthMm) * nextCanvasSize.width;
+ const targetHeightPx =
+ (targetHeightMm / nextSettings.workHeightMm) * nextCanvasSize.height;
+ if (currentRect.width > 0) {
+ obj.set(
+ "scaleX",
+ Number(obj.scaleX || 1) * (targetWidthPx / currentRect.width)
+ );
+ }
+ if (currentRect.height > 0) {
+ obj.set(
+ "scaleY",
+ Number(obj.scaleY || 1) * (targetHeightPx / currentRect.height)
+ );
+ }
+ obj.setCoords();
+ const resizedRect = obj.getBoundingRect(true, true);
+ const maxXmm = Math.max(0, nextSettings.workWidthMm - targetWidthMm);
+ const maxYmm = Math.max(0, nextSettings.workHeightMm - targetHeightMm);
+ const targetXmm = Math.min(Math.max(0, metrics.xMm), maxXmm);
+ const targetYmm = Math.min(Math.max(0, metrics.yMm), maxYmm);
+ const targetLeftPx =
+ (targetXmm / nextSettings.workWidthMm) * nextCanvasSize.width;
+ const targetTopPx =
+ (targetYmm / nextSettings.workHeightMm) * nextCanvasSize.height;
+ obj.set({
+ left: Number(obj.left || 0) + (targetLeftPx - resizedRect.left),
+ top: Number(obj.top || 0) + (targetTopPx - resizedRect.top),
+ });
+ keepObjectInsideCanvas(obj, canvas);
+ obj.setCoords();
+ });
+ canvas.requestRenderAll();
  syncActiveObjectMetrics(canvas);
  refreshObjectList(canvas);
- }
  }, [workWidthMm, workHeightMm]);
  const addTextObject = (textValue, size, options = {}) => {
  const canvas = fabricCanvas.current;
@@ -1185,12 +1177,22 @@ export default function Template() {
  fill="none"
  stroke="currentColor"
  viewBox="0 0 24 24"
+ aria-hidden="true"
  >
+ <rect
+ x="3"
+ y="5"
+ width="14"
+ height="14"
+ rx="2"
+ strokeWidth={2}
+ />
+ <circle cx="8" cy="10" r="1.5" strokeWidth={2} />
  <path
  strokeLinecap="round"
  strokeLinejoin="round"
  strokeWidth={2}
- d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+ d="M4.5 17l4-4 2.5 2.5 2-2L16 16.5M19 8h4m-2-2v4"
  />
  </svg>
  <span className="text-sm sm:text-base">Upload Logo / Gambar</span>
@@ -1445,19 +1447,22 @@ export default function Template() {
  </div>
  <div className="mt-3 flex flex-wrap gap-2 text-xs">
  <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-700">
- Area kerja: {mmToDisplay(workWidthMm)} x {mmToDisplay(workHeightMm)} {unit}
+ Area kerja: {mmToDisplay(workWidthMm)} × {mmToDisplay(workHeightMm)} {unit}
  </span>
  <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">
- Output: {mmToDisplay(workWidthMm * (SCALE_FACTORS[scaleMode] || 1))} x {mmToDisplay(workHeightMm * (SCALE_FACTORS[scaleMode] || 1))} {unit}
+ Output: {mmToDisplay(workWidthMm * (SCALE_FACTORS[scaleMode] || 1))} × {mmToDisplay(workHeightMm * (SCALE_FACTORS[scaleMode] || 1))} {unit}
  </span>
  <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700">
  LaserGRBL: gunakan 1:1 untuk ukuran fisik langsung
+ </span>
+ <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-600">
+ PNG final diunduh saat job di-Start dari Dashboard
  </span>
  </div>
  </div>
  {/*
  ====== GRUP STICKY: TOOLBAR + KANVAS TUMBLER ======
- Tidak diubah - tetap satu grup sticky seperti sebelumnya.
+ Tidak diubah — tetap satu grup sticky seperti sebelumnya.
  */}
  <div className="w-full flex flex-col items-center gap-4 sticky top-2 lg:top-4 z-10">
  {/*
@@ -1528,15 +1533,9 @@ export default function Template() {
  </button>
  </div>
  <button
- onClick={handleDownloadDesign}
- className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-slate-800 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:bg-slate-900 font-semibold transition shadow-md text-sm"
- >
- Download PNG + Data
- </button>
- <button
  onClick={handleSelesai}
- className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition
- shadow-md text-sm"
+ className="w-full sm:w-auto sm:flex-shrink-0 sm:whitespace-nowrap bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2.5 sm:py-2 rounded-xl hover:from-green-600 hover:to-emerald-700 font-semibold transition shadow-md
+ text-sm"
  >
  Selesai & Kirim
  </button>
@@ -1614,18 +1613,24 @@ export default function Template() {
  </div>
  )}
  </div>
- {/* Kartu tumbler tetap menggunakan preview gambar; area kerja fisik ditentukan dari pengaturan di atas. */}
+ {/* Preview tumbler. Rasio area kerja mengikuti ukuran fisik yang dipilih. */}
  <div className="w-full overflow-x-auto flex justify-center">
  <div className="bg-white p-4 sm:p-6 rounded-2xl shadow w-[300px] h-[500px] sm:w-[350px] sm:h-[550px] relative flex items-center justify-center flex-shrink-0">
  <img
  src={tumblerImg}
  className="absolute h-[430px] sm:h-[480px] pointer-events-none"
  />
- <div className="absolute w-[150px] h-[320px] flex items-center justify-center">
+ <div
+ className="absolute flex items-center justify-center transition-[width,height] duration-200"
+ style={{
+ width: `${canvasSize.width}px`,
+ height: `${canvasSize.height}px`,
+ }}
+ >
  <div className="absolute inset-0 pointer-events-none z-0">
  <div className="absolute inset-0 border-2 border-dashed border-green-400 rounded-md"></div>
  <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white/95 px-3 py-1 text-[10px] font-semibold text-green-700 shadow">
- {mmToDisplay(workWidthMm)} x {mmToDisplay(workHeightMm)} {unit} - {scaleMode}
+ {mmToDisplay(workWidthMm)} × {mmToDisplay(workHeightMm)} {unit} - {scaleMode}
  </div>
  <span className="absolute -left-8 top-1 text-[9px] text-green-700">0</span>
  <span className="absolute -right-12 top-1 text-[9px] text-green-700">
@@ -1634,12 +1639,13 @@ export default function Template() {
  <span className="absolute -left-12 bottom-0 text-[9px] text-green-700">
  {mmToDisplay(workHeightMm)} {unit}
  </span>
+ <span className="absolute left-1/2 -bottom-7 -translate-x-1/2 whitespace-nowrap text-[9px] font-medium text-green-700">
+ Area kerja mengikuti rasio fisik
+ </span>
  </div>
  <canvas
  ref={canvasRef}
  className="absolute z-10"
- width={CANVAS_WIDTH}
- height={CANVAS_HEIGHT}
  />
  </div>
  </div>
