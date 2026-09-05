@@ -1,20 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { fabric } from "fabric";
-const API_URL = import.meta.env.VITE_BACKEND_URL || "https://grafir-tumbler-backend.onrender.com";
+const API_URL =
+ import.meta.env.VITE_BACKEND_URL ||
+ "https://grafir-tumbler-backend.onrender.com";
+const ACTIVE_STATUSES = ["persiapan", "proses"];
 export default function Dashboard() {
  const [status, setStatus] = useState({});
  const [antrian, setAntrian] = useState([]);
  const [startingId, setStartingId] = useState(null);
- const [modal, setModal] = useState({ open: false, title: "", message: "" });
- const showAlert = (title, message) => setModal({ open: true, title, message });
- const closeModal = () => setModal({ open: false, title: "", message: "" });
+ const [powerUpdating, setPowerUpdating] = useState(false);
+ const [nowTick, setNowTick] = useState(Date.now());
+ const [modal, setModal] = useState({
+ open: false,
+ title: "",
+ message: "",
+ });
+ const showAlert = (title, message) =>
+ setModal({ open: true, title, message });
+ const closeModal = () =>
+ setModal({ open: false, title: "", message: "" });
  const activeJob = useMemo(
- () => antrian.find((item) => item.status === "proses") || null,
+ () => antrian.find((item) => ACTIVE_STATUSES.includes(item.status)) || null,
  [antrian]
  );
  const getStatus = async () => {
  try {
- const res = await fetch(`${API_URL}/status_mesin`, { cache: "no-store" });
+ const res = await fetch(`${API_URL}/status_mesin`, {
+ cache: "no-store",
+ });
  if (!res.ok) throw new Error(`HTTP ${res.status}`);
  const data = await res.json();
  setStatus(data || {});
@@ -24,7 +37,9 @@ export default function Dashboard() {
  };
  const getAntrian = async () => {
  try {
- const res = await fetch(`${API_URL}/antrian`, { cache: "no-store" });
+ const res = await fetch(`${API_URL}/antrian`, {
+ cache: "no-store",
+ });
  if (!res.ok) throw new Error(`HTTP ${res.status}`);
  const data = await res.json();
  setAntrian(Array.isArray(data) ? data : []);
@@ -37,6 +52,7 @@ export default function Dashboard() {
  };
  const handlePower = async (switchValue) => {
  try {
+ setPowerUpdating(true);
  const res = await fetch(`${API_URL}/status_mesin`, {
  method: "POST",
  headers: { "Content-Type": "application/json" },
@@ -44,13 +60,21 @@ export default function Dashboard() {
  });
  const data = await res.json();
  if (!res.ok || !data.success) {
- showAlert("Gagal", data.message || "Gagal mengubah kontrol mesin.");
+ showAlert(
+ "Gagal",
+ data.message || "Gagal mengubah kontrol mesin."
+ );
  return;
  }
  await getStatus();
  } catch (error) {
  console.log("POST status mesin error:", error);
- showAlert("Gagal", "Tidak dapat menghubungi backend kontrol mesin.");
+ showAlert(
+ "Gagal",
+ "Tidak dapat menghubungi backend kontrol mesin."
+ );
+ } finally {
+ setPowerUpdating(false);
  }
  };
  const downloadJobDesign = async (item) => {
@@ -118,8 +142,14 @@ export default function Dashboard() {
  );
  const exportLeft = Math.max(0, Math.floor(minLeft - padding));
  const exportTop = Math.max(0, Math.floor(minTop - padding));
- const exportWidth = Math.max(1, Math.ceil(maxRight - minLeft + padding * 2));
- const exportHeight = Math.max(1, Math.ceil(maxBottom - minTop + padding * 2));
+ const exportWidth = Math.max(
+ 1,
+ Math.ceil(maxRight - minLeft + padding * 2)
+ );
+ const exportHeight = Math.max(
+ 1,
+ Math.ceil(maxBottom - minTop + padding * 2)
+ );
  const dataUrl = tempCanvas.toDataURL({
  format: "png",
  quality: 1,
@@ -129,7 +159,8 @@ export default function Dashboard() {
  width: exportWidth,
  height: exportHeight,
  });
- const safeName = String(item.name || "design")
+ const safeName =
+ String(item.name || "design")
  .trim()
  .replace(/[^a-z0-9_-]+/gi, "_")
  .replace(/^_+|_+$/g, "") || "design";
@@ -147,7 +178,9 @@ export default function Dashboard() {
  if (activeJob && activeJob.id !== item.id) {
  showAlert(
  "Antrian Dikunci",
- `Job #${activeJob.id} sedang diproses. Tunggu sampai status job aktif menjadi Selesai.`
+ `Job #${activeJob.id} masih aktif pada tahap ${
+ activeJob.status === "persiapan" ? "Persiapan" : "Sedang diproses"
+ }. Tunggu sampai job aktif selesai.`
  );
  return;
  }
@@ -160,7 +193,10 @@ export default function Dashboard() {
  });
  const data = await res.json();
  if (!res.ok || !data.success) {
- showAlert("Start Gagal", data.message || "Job tidak dapat dimulai.");
+ showAlert(
+ "Start Gagal",
+ data.message || "Job tidak dapat dimulai."
+ );
  await getAntrian();
  return;
  }
@@ -174,15 +210,13 @@ export default function Dashboard() {
  await refreshDashboard();
  if (downloadBerhasil) {
  showAlert(
- "Job Dimulai",
- `Job #${item.id} sekarang Sedang diproses dan file PNG desain otomatis didownload. Job lain dikunci sampai 
-mesin selesai bekerja.`
+ "Job Masuk Persiapan",
+ `Job #${item.id} sekarang berstatus Persiapan. Runtime mulai dihitung dan file PNG desain otomatis didownload.`
  );
  } else {
  showAlert(
- "Job Dimulai - Download Gagal",
- `Job #${item.id} sudah berstatus Sedang diproses, tetapi file PNG gagal didownload. Cek console browser 
-atau coba ulang setelah job selesai.`
+ "Job Masuk Persiapan - Download Gagal",
+ `Job #${item.id} sudah berstatus Persiapan, tetapi file PNG gagal didownload. Cek console browser.`
  );
  }
  } catch (error) {
@@ -193,29 +227,80 @@ atau coba ulang setelah job selesai.`
  }
  };
  const getStatusBadge = (itemStatus) => {
- if (itemStatus === "selesai") return "bg-green-100 text-green-700";
- if (itemStatus === "proses") return "bg-blue-100 text-blue-700";
+ if (itemStatus === "selesai") {
+ return "bg-green-100 text-green-700";
+ }
+ if (itemStatus === "proses") {
+ return "bg-blue-100 text-blue-700";
+ }
+ if (itemStatus === "persiapan") {
+ return "bg-orange-100 text-orange-700";
+ }
  return "bg-yellow-100 text-yellow-700";
  };
  const getStatusLabel = (itemStatus) => {
  if (itemStatus === "selesai") return "Selesai";
  if (itemStatus === "proses") return "Sedang diproses";
+ if (itemStatus === "persiapan") return "Persiapan";
  return "Menunggu";
+ };
+ const formatSeconds = (totalSeconds) => {
+ const safeSeconds = Math.max(0, Math.floor(Number(totalSeconds) || 0));
+ const hours = Math.floor(safeSeconds / 3600);
+ const minutes = Math.floor((safeSeconds % 3600) / 60);
+ const seconds = safeSeconds % 60;
+ return [hours, minutes, seconds]
+ .map((value) => String(value).padStart(2, "0"))
+ .join(":");
+ };
+ const getRuntimeSeconds = (item) => {
+ if (!item.started_at) {
+ return Number(item.runtime_seconds || 0);
+ }
+ const startedAtMs = new Date(item.started_at).getTime();
+ if (!Number.isFinite(startedAtMs)) {
+ return Number(item.runtime_seconds || 0);
+ }
+ const finishedAtMs = item.finished_at
+ ? new Date(item.finished_at).getTime()
+ : nowTick;
+ if (!Number.isFinite(finishedAtMs)) {
+ return Number(item.runtime_seconds || 0);
+ }
+ return Math.max(0, Math.floor((finishedAtMs - startedAtMs) / 1000));
  };
  useEffect(() => {
  refreshDashboard();
- const interval = setInterval(refreshDashboard, 2000);
- return () => clearInterval(interval);
+ const refreshInterval = setInterval(refreshDashboard, 2000);
+ const runtimeInterval = setInterval(() => setNowTick(Date.now()), 1000);
+ return () => {
+ clearInterval(refreshInterval);
+ clearInterval(runtimeInterval);
+ };
  }, []);
  const ActionButton = ({ item }) => {
- const lockedByOtherJob = Boolean(activeJob && activeJob.id !== item.id);
+ const lockedByOtherJob = Boolean(
+ activeJob && activeJob.id !== item.id
+ );
  const isStarting = startingId === item.id;
- const canStart = item.status === "menunggu" && !lockedByOtherJob && !isStarting;
+ const canStart =
+ item.status === "menunggu" &&
+ !lockedByOtherJob &&
+ !isStarting;
  let label = "Start";
  if (isStarting) label = "Memulai...";
+ else if (item.status === "persiapan") label = "Persiapan";
  else if (item.status === "proses") label = "Sedang diproses";
  else if (item.status === "selesai") label = "Selesai";
  else if (lockedByOtherJob) label = "Terkunci";
+ const disabledClass =
+ item.status === "persiapan"
+ ? "bg-orange-100 text-orange-700 cursor-not-allowed"
+ : item.status === "proses"
+ ? "bg-blue-100 text-blue-700 cursor-not-allowed"
+ : item.status === "selesai"
+ ? "bg-green-100 text-green-700 cursor-not-allowed"
+ : "bg-slate-200 text-slate-500 cursor-not-allowed";
  return (
  <button
  type="button"
@@ -224,11 +309,7 @@ atau coba ulang setelah job selesai.`
  className={`w-full sm:w-auto min-w-[130px] px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
  canStart
  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md"
- : item.status === "proses"
- ? "bg-blue-100 text-blue-700 cursor-not-allowed"
- : item.status === "selesai"
- ? "bg-green-100 text-green-700 cursor-not-allowed"
- : "bg-slate-200 text-slate-500 cursor-not-allowed"
+ : disabledClass
  }`}
  >
  {label}
@@ -242,9 +323,11 @@ atau coba ulang setelah job selesai.`
  const isRunning = machineStatus.toLowerCase() === "running";
  const sensorOnline = status.sensor_online === true;
  const dataAgeSeconds =
- status.data_age_seconds !== null && status.data_age_seconds !== undefined
+ status.data_age_seconds !== null &&
+ status.data_age_seconds !== undefined
  ? Number(status.data_age_seconds)
  : null;
+ const switchOn = Number(status.switch) === 1;
  return (
  <div className="space-y-6">
  <section className="bg-white rounded-2xl sm:rounded-3xl shadow-lg border border-slate-200 overflow-hidden">
@@ -252,26 +335,67 @@ atau coba ulang setelah job selesai.`
  <div className="p-4 sm:p-6 md:p-8">
  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
  <div>
- <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Monitoring Mesin</h2>
- <p className="text-sm text-slate-500">Status mesin, voltage, arus, dan daya diperbarui dari data PZEM 
-yang diterima API.</p>
+ <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+ Monitoring Mesin
+ </h2>
+ <p className="text-sm text-slate-500">
+ Status mesin, voltage, arus, dan daya diperbarui dari data
+ PZEM yang diterima API.
+ </p>
  </div>
- <div className="inline-flex self-start sm:self-auto items-center gap-2 rounded-full px-4 py-2 text-sm 
-font-semibold bg-slate-100 text-slate-600">
+ <div className="inline-flex self-start sm:self-auto items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold
+ bg-slate-100 text-slate-600">
  Update otomatis setiap 2 detik
  </div>
  </div>
  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50">
  <p className="text-sm text-slate-500">Kontrol Mesin</p>
- <p className={`mt-2 text-3xl font-bold ${Number(status.switch) === 1 ? "text-green-600" : "text-red-500"}`}>
- {Number(status.switch) === 1 ? "ON" : "OFF"}
+ <div className="mt-3 flex items-center justify-between gap-4">
+ <div>
+ <p
+ className={`text-3xl font-bold ${
+ switchOn ? "text-green-600" : "text-red-500"
+ }`}
+ >
+ {switchOn ? "ON" : "OFF"}
  </p>
- <div className="flex gap-2 mt-4">
- <button onClick={() => handlePower(1)} className="flex-1 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold">ON</button>
- <button onClick={() => handlePower(0)} className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 
-text-white font-semibold">OFF</button>
+ <p className="mt-1 text-xs text-slate-500">
+ Perintah daya mesin
+ </p>
  </div>
+ <button
+ type="button"
+ role="switch"
+ aria-checked={switchOn}
+ aria-label={
+ switchOn ? "Matikan mesin" : "Nyalakan mesin"
+ }
+ onClick={() => handlePower(switchOn ? 0 : 1)}
+ disabled={powerUpdating}
+ className={`relative inline-flex h-8 w-16 shrink-0 items-center rounded-full transition-colors
+ focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+ switchOn ? "bg-green-500" : "bg-slate-300"
+ } ${
+ powerUpdating
+ ? "cursor-wait opacity-60"
+ : "cursor-pointer"
+ }`}
+ >
+ <span
+ className={`inline-block h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
+ switchOn ? "translate-x-9" : "translate-x-1"
+ }`}
+ />
+ </button>
+ </div>
+ <p className="mt-4 text-xs font-medium text-slate-600">
+ {powerUpdating
+ ? "Memperbarui kontrol..."
+ : switchOn
+ ? "Klik switch untuk OFF"
+ : "Klik switch untuk ON"}
+ </p>
  </div>
  <div
  className={`border rounded-2xl p-5 ${
@@ -349,20 +473,33 @@ text-white font-semibold">OFF</button>
  </div>
  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50">
  <p className="text-sm text-slate-500">Tegangan</p>
- <p className="mt-2 text-3xl font-bold text-slate-800">{voltage.toFixed(1)} <span className="text-lg 
-text-slate-500">V</span></p>
- <p className="mt-3 text-xs text-slate-500">Voltage dari PZEM</p>
+ <p className="mt-2 text-3xl font-bold text-slate-800">
+ {voltage.toFixed(1)}{" "}
+ <span className="text-lg text-slate-500">V</span>
+ </p>
+ <p className="mt-3 text-xs text-slate-500">
+ Voltage dari PZEM
+ </p>
  </div>
  <div className="border border-blue-200 rounded-2xl p-5 bg-blue-50">
  <p className="text-sm text-blue-600">Arus</p>
- <p className="mt-2 text-3xl font-bold text-blue-700">{current.toFixed(3)} <span className="text-lg text-blue-500">A</span></p>
- <p className="mt-3 text-xs text-blue-600">Current real-time dari PZEM</p>
+ <p className="mt-2 text-3xl font-bold text-blue-700">
+ {current.toFixed(3)}{" "}
+ <span className="text-lg text-blue-500">A</span>
+ </p>
+ <p className="mt-3 text-xs text-blue-600">
+ Current real-time dari PZEM
+ </p>
  </div>
  <div className="border border-slate-200 rounded-2xl p-5 bg-slate-50">
  <p className="text-sm text-slate-500">Daya</p>
- <p className="mt-2 text-3xl font-bold text-slate-800">{powerWatt.toFixed(1)} <span className="text-lg 
-text-slate-500">W</span></p>
- <p className="mt-3 text-xs text-slate-500">Power aktual mesin</p>
+ <p className="mt-2 text-3xl font-bold text-slate-800">
+ {powerWatt.toFixed(1)}{" "}
+ <span className="text-lg text-slate-500">W</span>
+ </p>
+ <p className="mt-3 text-xs text-slate-500">
+ Power aktual mesin
+ </p>
  </div>
  </div>
  </div>
@@ -372,77 +509,185 @@ text-slate-500">W</span></p>
  <div className="p-4 sm:p-6 md:p-8">
  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
  <div>
- <h2 className="text-xl sm:text-2xl font-bold text-slate-800">Antrian Produksi</h2>
- <p className="text-slate-500 text-sm">Total Antrian: {antrian.length}</p>
+ <h2 className="text-xl sm:text-2xl font-bold text-slate-800">
+ Antrian Produksi
+ </h2>
+ <p className="text-slate-500 text-sm">
+ Total Antrian: {antrian.length}
+ </p>
  </div>
- <button onClick={refreshDashboard} className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg w-full sm:w-auto">Refresh</button>
+ <button
+ type="button"
+ onClick={refreshDashboard}
+ className="px-5 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg w-full sm:w-auto"
+ >
+ Refresh
+ </button>
  </div>
  {activeJob && (
  <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
- <span className="font-semibold">Antrian terkunci.</span> Job #{activeJob.id} ({activeJob.name}) sedang 
-diproses. Job lain akan aktif kembali setelah status job aktif menjadi Selesai.
+ <span className="font-semibold">Antrian terkunci.</span>{" "}
+ Job #{activeJob.id} ({activeJob.name}) sedang pada tahap{" "}
+ <span className="font-semibold">
+ {getStatusLabel(activeJob.status)}
+ </span>
+ . Job lain akan aktif kembali setelah job aktif selesai.
  </div>
  )}
  <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200">
- <table className="w-full">
+ <table className="w-full min-w-[1180px]">
  <thead>
  <tr className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
- <th className="p-4">No</th>
+ <th className="p-4">Posisi</th>
+ <th className="p-4">ID Job</th>
+ <th className="p-4">ID Mesin</th>
  <th className="p-4 text-left">Nama Design</th>
  <th className="p-4">Text</th>
  <th className="p-4">Status</th>
+ <th className="p-4">Runtime</th>
  <th className="p-4">Aksi</th>
  </tr>
  </thead>
  <tbody>
  {antrian.length === 0 ? (
- <tr><td colSpan="5" className="py-16 text-center text-slate-400">Belum ada antrian produksi</td></
-tr>
- ) : antrian.map((item, index) => (
- <tr key={item.id} className="border-b hover:bg-slate-50 transition">
- <td className="p-4 text-center font-medium">{index + 1}</td>
- <td className="p-4">
- <div className="font-semibold text-slate-800">{item.name}</div>
- <div className="text-xs text-slate-500">#{item.id}</div>
+ <tr>
+ <td
+ colSpan="8"
+ className="py-16 text-center text-slate-400"
+ >
+ Belum ada antrian produksi
  </td>
- <td className="p-4 text-center">{item.text || "-"}</td>
- <td className="p-4 text-center"><span className={`px-4 py-2 rounded-full text-sm font-medium ${
-getStatusBadge(item.status)}`}>{getStatusLabel(item.status)}</span></td>
- <td className="p-4 text-center"><ActionButton item={item} /></td>
  </tr>
- ))}
+ ) : (
+ antrian.map((item, index) => (
+ <tr
+ key={item.id}
+ className="border-b hover:bg-slate-50 transition"
+ >
+ <td className="p-4 text-center font-semibold text-slate-700">
+ {item.queue_position ?? index + 1}
+ </td>
+ <td className="p-4 text-center font-mono text-sm font-semibold text-slate-700">
+ #{item.id}
+ </td>
+ <td className="p-4 text-center font-mono text-sm text-slate-700">
+ {item.machine_id ?? 1}
+ </td>
+ <td className="p-4">
+ <div className="font-semibold text-slate-800">
+ {item.name}
+ </div>
+ </td>
+ <td className="p-4 text-center">
+ {item.text || "-"}
+ </td>
+ <td className="p-4 text-center">
+ <span
+ className={`px-4 py-2 rounded-full text-sm font-medium ${getStatusBadge(
+ item.status
+ )}`}
+ >
+ {getStatusLabel(item.status)}
+ </span>
+ </td>
+ <td className="p-4 text-center">
+ <span className="inline-flex rounded-lg bg-slate-100 px-3 py-2 font-mono text-sm font-semibold
+ tabular-nums text-slate-700">
+ {formatSeconds(getRuntimeSeconds(item))}
+ </span>
+ </td>
+ <td className="p-4 text-center">
+ <ActionButton item={item} />
+ </td>
+ </tr>
+ ))
+ )}
  </tbody>
  </table>
  </div>
  <div className="md:hidden space-y-3">
  {antrian.length === 0 ? (
- <div className="py-16 text-center text-slate-400 rounded-2xl border border-slate-200">Belum ada antrian 
-produksi</div>
- ) : antrian.map((item, index) => (
- <div key={item.id} className="rounded-2xl border border-slate-200 p-4 shadow-sm">
+ <div className="py-16 text-center text-slate-400 rounded-2xl border border-slate-200">
+ Belum ada antrian produksi
+ </div>
+ ) : (
+ antrian.map((item, index) => (
+ <div
+ key={item.id}
+ className="rounded-2xl border border-slate-200 p-4 shadow-sm"
+ >
  <div className="flex justify-between items-start gap-3 mb-3">
  <div>
- <div className="text-xs text-slate-400 font-medium">#{index + 1} · ID {item.id}</div>
- <div className="font-semibold text-slate-800">{item.name}</div>
+ <div className="text-xs text-slate-400 font-medium">
+ Posisi {item.queue_position ?? index + 1}
  </div>
- <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusBadge(
-item.status)}`}>{getStatusLabel(item.status)}</span>
+ <div className="font-semibold text-slate-800">
+ {item.name}
  </div>
- <div className="text-sm text-slate-500 mb-3"><span className="font-medium text-slate-600">Text: </
-span>{item.text || "-"}</div>
+ </div>
+ <span
+ className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusBadge(
+ item.status
+ )}`}
+ >
+ {getStatusLabel(item.status)}
+ </span>
+ </div>
+ <div className="grid grid-cols-2 gap-2 mb-4 text-sm">
+ <div className="rounded-xl bg-slate-50 p-3">
+ <p className="text-xs text-slate-400">ID Job</p>
+ <p className="font-semibold text-slate-700">
+ #{item.id}
+ </p>
+ </div>
+ <div className="rounded-xl bg-slate-50 p-3">
+ <p className="text-xs text-slate-400">ID Mesin</p>
+ <p className="font-semibold text-slate-700">
+ {item.machine_id ?? 1}
+ </p>
+ </div>
+ <div className="rounded-xl bg-slate-50 p-3 col-span-2">
+ <p className="text-xs text-slate-400">Runtime</p>
+ <p className="font-mono font-semibold tabular-nums text-slate-700">
+ {formatSeconds(getRuntimeSeconds(item))}
+ </p>
+ </div>
+ </div>
+ <div className="text-sm text-slate-500 mb-3">
+ <span className="font-medium text-slate-600">
+ Text:{" "}
+ </span>
+ {item.text || "-"}
+ </div>
  <ActionButton item={item} />
  </div>
- ))}
+ ))
+ )}
  </div>
  </div>
  </section>
  {modal.open && (
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" 
-onClick={closeModal}>
- <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
- <h3 className="text-lg font-bold text-slate-800">{modal.title}</h3>
- <p className="mt-2 text-sm leading-relaxed text-slate-500">{modal.message}</p>
- <button onClick={closeModal} className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">OK</button>
+ <div
+ className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+ onClick={closeModal}
+ >
+ <div
+ className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+ onClick={(event) => event.stopPropagation()}
+ >
+ <h3 className="text-lg font-bold text-slate-800">
+ {modal.title}
+ </h3>
+ <p className="mt-2 text-sm leading-relaxed text-slate-500">
+ {modal.message}
+ </p>
+ <button
+ type="button"
+ onClick={closeModal}
+ className="mt-5 w-full rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700"
+ >
+ OK
+ </button>
  </div>
  </div>
  )}
